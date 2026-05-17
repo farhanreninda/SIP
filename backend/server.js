@@ -7,6 +7,10 @@ const app = express()
 app.use(cors())
 app.use(bodyParser.json())
 
+app.get('/', (req, res) => {
+  res.send('SIP Backend API is running. Please access the frontend via index.html or Laragon host.')
+})
+
 const authRoutes = require('./routes/auth')
 const productRoutes = require('./routes/products')
 const txRoutes = require('./routes/transactions')

@@ -21,3 +21,5 @@ Catatan teknis:
 - Untuk reset data, hapus `penjualan_v1` di Storage browser.
 
 Jika mau, saya bisa menambahkan export CSV laporan, atau integrasi backend sederhana (Node/Express).
+
+http://sip.test/ adalah akses frontend

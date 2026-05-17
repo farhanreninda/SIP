@@ -18,14 +18,18 @@
       cancel(){ this.visible = false; if(this.resolver){ this.resolver(false); this.resolver=null } }
     },
     template: `
-      <v-dialog v-model="visible" max-width="520">
-        <v-card>
-          <v-card-title class="headline">{{title}}</v-card-title>
-          <v-card-text style="white-space:pre-line">{{message}}</v-card-text>
-          <v-card-actions>
+      <v-dialog v-model="visible" max-width="440" persistent>
+        <v-card class="card-floating pa-2">
+          <v-card-title class="headline font-bold mb-2" style="color: #1e3a8a; font-size: 22px !important;">
+            {{title}}
+          </v-card-title>
+          <v-card-text style="white-space:pre-line; color: #64748b; font-size: 15px; font-weight: 500;">
+            {{message}}
+          </v-card-text>
+          <v-card-actions class="mt-4">
             <v-spacer></v-spacer>
-            <v-btn text color="grey" @click="cancel">{{cancelText}}</v-btn>
-            <v-btn color="primary" @click="ok">{{okText}}</v-btn>
+            <v-btn text color="#64748b" style="text-transform: none; font-weight: 600;" @click="cancel">{{cancelText}}</v-btn>
+            <v-btn class="btn-primary px-6" @click="ok">{{okText}}</v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>
