@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SIP Pelanggan</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.x/css/materialdesignicons.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/vuetify@2.6.14/dist/vuetify.min.css" rel="stylesheet">
+
+  <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vuetify@2.6.14/dist/vuetify.min.js"></script>
+
+  <link rel="stylesheet" href="./assets/css/style.css?v=20">
+</head>
+
+<body>
+  <div id="app">
+    <v-app>
+      <customer-scan-page
+        v-if="publicPage==='scan'"
+        @admin-login="openAdmin"
+        @customer-ready="onCustomerReady"
+      ></customer-scan-page>
+
+      <customer-menu-page
+        v-else-if="publicPage==='customer-menu'"
+        :customer="customer"
+        @admin-login="openAdmin"
+        @track="openTracking"
+        @ordered="onCustomerOrdered"
+      ></customer-menu-page>
+
+      <customer-tracking-page
+        v-else-if="publicPage==='tracking'"
+        :initial-code="lastOrderCode"
+        @back-menu="backToCustomerMenu"
+      ></customer-tracking-page>
+    </v-app>
+  </div>
+
+  <script>
+    window.API_BASE_URL = 'http://localhost:3000'
+  </script>
+  <script src="./js/services/api.js?v=7"></script>
+  <script src="./js/notify.js"></script>
+  <script src="./js/components/customer.js?v=11"></script>
+
+  <script>
+    const CUSTOMER_PAGE_KEY = 'sip_customer_active_page'
+    const CUSTOMER_DATA_KEY = 'sip_customer_data'
+    const CUSTOMER_ORDER_KEY = 'sip_customer_last_order_code'
+    const CUSTOMER_PAGES = ['scan', 'customer-menu', 'tracking']
+
+    new Vue({
+      el: '#app',
+      vuetify: new Vuetify({}),
+      data: {
+        publicPage: 'scan',
+        customer: null,
+        lastOrderCode: ''
+      },
+      created() {
+        const params = new URLSearchParams(window.location.search)
+        const nama = params.get('nama')
+        const meja = params.get('meja')
+        const kode = params.get('kode')
+
+        if (kode) {
+          this.lastOrderCode = kode
+          this.setPublicPage('tracking')
+          this.saveCustomerSession()
+          return
+        }
+
+        if (nama || meja) {
+          this.customer = {
+            nama_pelanggan: nama || 'Pelanggan',
+            no_meja: meja || ''
+          }
+          this.setPublicPage('customer-menu')
+          this.saveCustomerSession()
+          return
+        }
+
+        this.restoreCustomerSession()
+        if (this.publicPage === 'customer-menu' && !this.customer) {
+          this.publicPage = 'scan'
+        }
+        if (this.publicPage === 'tracking' && !this.lastOrderCode && !this.customer) {
+          this.publicPage = 'scan'
+        }
+      },
+      methods: {
+        onCustomerReady(customer) {
+          this.customer = customer
+          this.setPublicPage('customer-menu')
+          this.saveCustomerSession()
+        },
+        onCustomerOrdered(kode) {
+          this.lastOrderCode = kode
+          this.setPublicPage('tracking')
+          this.saveCustomerSession()
+        },
+        openTracking() {
+          this.setPublicPage('tracking')
+          this.saveCustomerSession()
+        },
+        backToCustomerMenu() {
+          this.setPublicPage(this.customer ? 'customer-menu' : 'scan')
+          this.saveCustomerSession()
+        },
+        setPublicPage(page) {
+          if (!CUSTOMER_PAGES.includes(page)) return
+          this.publicPage = page
+          localStorage.setItem(CUSTOMER_PAGE_KEY, page)
+        },
+        restoreCustomerSession() {
+          const savedPage = localStorage.getItem(CUSTOMER_PAGE_KEY)
+          const savedCustomer = localStorage.getItem(CUSTOMER_DATA_KEY)
+          const savedCode = localStorage.getItem(CUSTOMER_ORDER_KEY)
+
+          if (savedCustomer) {
+            try { this.customer = JSON.parse(savedCustomer) } catch (e) { this.customer = null }
+          }
+          if (savedCode) this.lastOrderCode = savedCode
+          if (CUSTOMER_PAGES.includes(savedPage)) this.publicPage = savedPage
+        },
+        saveCustomerSession() {
+          localStorage.setItem(CUSTOMER_PAGE_KEY, this.publicPage)
+          if (this.customer) localStorage.setItem(CUSTOMER_DATA_KEY, JSON.stringify(this.customer))
+          else localStorage.removeItem(CUSTOMER_DATA_KEY)
+          if (this.lastOrderCode) localStorage.setItem(CUSTOMER_ORDER_KEY, this.lastOrderCode)
+          else localStorage.removeItem(CUSTOMER_ORDER_KEY)
+        },
+        openAdmin() {
+          window.location.href = './admin.html'
+        }
+      }
+    })
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Sistem Informasi Penjualan</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, Segoe UI, Arial, sans-serif;
+      background: linear-gradient(135deg, #eff6ff, #dbeafe);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #0f172a;
+    }
+
+    .portal {
+      width: min(920px, calc(100% - 40px));
+      background: white;
+      border-radius: 24px;
+      padding: 40px;
+      box-shadow: 0 24px 80px rgba(37, 99, 235, 0.14);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 34px;
+    }
+
+    .logo {
+      width: 54px;
+      height: 54px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: white;
+      font-weight: 900;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 30px;
+      color: #1e3a8a;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 8px 0 0;
+      color: #64748b;
+      line-height: 1.6;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .entry {
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 26px;
+      text-decoration: none;
+      color: inherit;
+      transition: 0.2s ease;
+      min-height: 180px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .entry:hover {
+      transform: translateY(-3px);
+      border-color: #2563eb;
+      box-shadow: 0 14px 34px rgba(37, 99, 235, 0.12);
+    }
+
+    .entry-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    .entry-action {
+      margin-top: 24px;
+      color: #2563eb;
+      font-weight: 800;
+    }
+
+    @media (max-width: 720px) {
+      .portal {
+        padding: 28px;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="portal">
+    <div class="brand">
+      <div class="logo">SIP</div>
+      <div>
+        <h1>Sistem Informasi Penjualan</h1>
+        <p>Warung Bakso Tulus</p>
+      </div>
+    </div>
+
+    <div class="grid">
+      <a class="entry" href="./admin.html">
+        <div>
+          <div class="entry-title">Admin</div>
+          <p>Login pemilik usaha untuk mengelola dashboard, pesanan, transaksi, menu, dan laporan penjualan.</p>
+        </div>
+        <div class="entry-action">Masuk Admin</div>
+      </a>
+
+      <a class="entry" href="./pelanggan.html">
+        <div>
+          <div class="entry-title">Pelanggan</div>
+          <p>Akses menu digital, tambah pesanan, dan tracking status pesanan tanpa login admin.</p>
+        </div>
+        <div class="entry-action">Buka Menu Pelanggan</div>
+      </a>
+    </div>
+  </main>
+</body>
+
+</html>
