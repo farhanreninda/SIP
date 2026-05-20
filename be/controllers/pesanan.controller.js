@@ -2,6 +2,13 @@ const pool = require('../config/mysql')
 const { kode } = require('../utils/code')
 const MySqlPesanan = require('../models/mysql/pesanan')
 
+function encodeNotes(itemNote, generalNote) {
+  const item = String(itemNote || '').trim()
+  const umum = String(generalNote || '').trim()
+  if (!umum) return item
+  return JSON.stringify({ item, umum })
+}
+
 async function list(req, res) {
   const { status, from, to } = req.query
   const where = []
@@ -28,6 +35,7 @@ async function list(req, res) {
 
 async function createPublic(req, res) {
   const { nama_pelanggan, no_meja, items } = req.body
+  const catatanUmum = req.body.catatan_umum || req.body.keterangan || ''
 
   if (!nama_pelanggan) return res.status(400).json({ error: 'nama_pelanggan required' })
   if (!items || !items.length) return res.status(400).json({ error: 'items required' })
@@ -60,7 +68,7 @@ async function createPublic(req, res) {
         id_pelanggan: idPelanggan,
         id_menu: idMenu,
         qty,
-        keterangan: item.keterangan || '',
+        keterangan: encodeNotes(item.keterangan || item.catatan_produk || '', item.catatan_umum || catatanUmum),
         status: 'baru'
       })
       inserted.push(idPesanan)

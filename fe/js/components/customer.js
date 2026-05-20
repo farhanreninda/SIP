@@ -1,254 +1,687 @@
-Vue.component('customer-scan-page',{
-  template:`
-    <v-container fluid class="login-wrapper">
-      <div class="login-card-blue animate-up" style="max-width:520px;">
-        <div class="text-center mb-6">
-          <div class="d-inline-flex align-center justify-center mb-4" style="background:white;color:#2563eb;width:64px;height:64px;border-radius:50%;font-weight:bold;font-size:20px;border:2px dashed #2563eb;">
-            QR
-          </div>
-          <h1 style="color:#1e3a8a;font-size:24px;font-weight:800;margin-bottom:8px;">Scan Barcode Menu</h1>
-          <p style="color:#64748b;font-size:14px;">Masukkan data meja untuk membuka menu digital Warung Bakso Tulus</p>
+Vue.component('customer-scan-page', {
+  props: ['initialTable'],
+  template: `
+    <div class="customer-stage">
+      <div class="scan-screen">
+        <div class="phone-status-row">
+          <span>9:41</span>
+          <span>100%</span>
         </div>
-        <v-form @submit.prevent="start">
-          <label class="form-label">Nama Pelanggan</label>
-          <v-text-field v-model="form.nama_pelanggan" outlined dense class="mt-1 mb-3" prepend-inner-icon="mdi-account"></v-text-field>
-          <label class="form-label">Nomor Meja</label>
-          <v-text-field v-model="form.no_meja" outlined dense class="mt-1 mb-6" prepend-inner-icon="mdi-table-chair"></v-text-field>
-          <v-btn class="btn-primary" block large @click="start"><v-icon left>mdi-qrcode-scan</v-icon>Lihat Menu</v-btn>
-          <v-btn text block class="mt-3 text-none font-weight-bold" color="primary" @click="$emit('admin-login')">Login Admin</v-btn>
-        </v-form>
+        <div class="scan-hero-panel">
+          <section class="scan-copy">
+            <div class="scan-brand-row">
+              <div class="brand-mark customer-logo">
+                <v-icon color="white">mdi-noodles</v-icon>
+              </div>
+            </div>
+            <h1>Warung Bakso Tulus</h1>
+            <p>{{ detectedTable ? 'Meja ' + detectedTable + ' terdeteksi. Isi nama Anda untuk mulai pesan.' : 'Buka halaman ini dari QR meja untuk mendeteksi nomor meja.' }}</p>
+          </section>
+
+          <section class="scan-form-card">
+            <div class="detected-table-card" :class="{'is-missing': !detectedTable}">
+              <v-icon>{{ detectedTable ? 'mdi-table-chair' : 'mdi-alert-circle-outline' }}</v-icon>
+              <div>
+                <span>Nomor Meja</span>
+                <strong>{{ detectedTable || '-' }}</strong>
+              </div>
+            </div>
+
+            <div class="manual-divider" v-if="detectedTable">&mdash; meja otomatis dari QR &mdash;</div>
+            <div class="manual-divider is-warning" v-else>&mdash; meja belum terdeteksi &mdash;</div>
+
+            <v-text-field v-model="form.nama_pelanggan" outlined dense hide-details class="mobile-input mb-4" prepend-inner-icon="mdi-account" placeholder="Nama pelanggan"></v-text-field>
+
+            <v-btn class="btn-primary mobile-main-btn" block depressed :disabled="!detectedTable" @click="start">
+              Lanjutkan ke Menu &rarr;
+            </v-btn>
+            <inline-feedback :message="feedback.message" :type="feedback.type"></inline-feedback>
+            <div class="mobile-note"><v-icon x-small>mdi-lightbulb-on-outline</v-icon> Nomor meja mengikuti QR yang dipindai.</div>
+          </section>
+
+          <section class="scan-extra-card">
+            <div class="scan-extra-title">Pilihan menu</div>
+            <div class="scan-extra-grid">
+              <div><v-icon small>mdi-bowl-mix</v-icon><span>Bakso</span></div>
+              <div><v-icon small>mdi-noodles</v-icon><span>Mie</span></div>
+              <div><v-icon small>mdi-cup</v-icon><span>Minuman</span></div>
+            </div>
+          </section>
+        </div>
       </div>
-    </v-container>
+
+    </div>
   `,
-  data(){return{form:{nama_pelanggan:'',no_meja:''}}},
-  methods:{
-    start(){
-      if(!this.form.nama_pelanggan){ notify('Isi nama pelanggan','error'); return }
-      this.$emit('customer-ready', Object.assign({},this.form))
+  data() {
+    return {
+      form: { nama_pelanggan: '', no_meja: this.initialTable || '' },
+      feedback: { message: '', type: 'info' }
+    }
+  },
+  computed: {
+    detectedTable() {
+      return String((this.form && this.form.no_meja) || this.initialTable || '').trim()
+    }
+  },
+  watch: {
+    initialTable(value) {
+      this.form.no_meja = value || ''
+    }
+  },
+  methods: {
+    showFeedback(message, type='info') {
+      this.feedback = { message, type }
+    },
+    start() {
+      this.showFeedback('', 'info')
+      if (!this.form.nama_pelanggan) { this.showFeedback('Isi nama pelanggan', 'error'); return }
+      if (!this.detectedTable) { this.showFeedback('Nomor meja belum terdeteksi dari QR', 'error'); return }
+      this.$emit('customer-ready', {
+        nama_pelanggan: this.form.nama_pelanggan,
+        no_meja: this.detectedTable
+      })
     }
   }
 })
 
-Vue.component('customer-menu-page',{
-  props:['customer'],
-  template:`
-    <div class="app-layout customer-layout">
-      <div class="main-content" style="width:100%;">
-        <div class="bg-hero"></div>
-        <div class="page-content-wrapper">
-          <div class="topbar customer-topbar animate-up">
-            <div class="customer-brand-block">
-              <div class="breadcrumb-item">Warung Bakso Tulus</div>
-              <div class="customer-table-pill">
-                <v-icon small color="inherit">mdi-table-chair</v-icon>
-                <span>Meja {{ customer.no_meja || '-' }}</span>
+Vue.component('customer-menu-page', {
+  props: ['customer', 'initialView'],
+  template: `
+    <div class="customer-stage">
+      <div class="mobile-app-screen">
+        <transition name="customer-view" mode="out-in">
+        <div v-if="view === 'menu'" key="menu" class="mobile-menu-view">
+            <div class="mobile-top mobile-menu-head">
+              <div class="mobile-greeting-block">
+                <span class="table-chip">
+                  <v-icon x-small>mdi-table-chair</v-icon>
+                  Meja {{ customer.no_meja || '-' }}
+                </span>
+                <h1>Halo, {{ firstName }} <v-icon color="#c2372f" small>mdi-hand-wave-outline</v-icon></h1>
               </div>
             </div>
-            <v-spacer></v-spacer>
-            <div class="customer-top-actions">
-              <v-btn class="customer-track-btn" @click="$emit('track')"><v-icon left small>mdi-map-marker-path</v-icon>Tracking</v-btn>
+            <inline-feedback :message="feedback.message" :type="feedback.type"></inline-feedback>
+
+            <div class="mobile-search">
+              <v-icon small color="#c2372f">mdi-magnify</v-icon>
+              <input v-model="q" type="search" placeholder="Cari menu favorit...">
+            </div>
+
+            <div class="mobile-category-scroll">
+              <button
+                v-for="cat in categoryTabs"
+                :key="cat.value"
+                type="button"
+                :class="{active: activeCategory === cat.value}"
+                @click="activeCategory = cat.value"
+              >
+                <v-icon small>{{ cat.icon }}</v-icon>
+                {{ cat.text }}
+              </button>
+            </div>
+
+            <div class="mobile-section-title menu-list-title">
+              <span>Daftar Menu</span>
+              <small>{{ filteredMenus.length }} item</small>
+            </div>
+
+            <div class="mobile-menu-grid">
+              <article v-for="menu in filteredMenus" :key="menu.id_menu" class="mobile-menu-card" :class="{'is-disabled': menu.stok <= 0, 'is-added': isMenuAdded(menu)}">
+                <div class="mobile-menu-media">
+                  <span>{{ menu.kategori || 'Menu' }}</span>
+                  <div class="menu-added-badge" :class="{visible: isMenuAdded(menu)}">
+                    <v-icon x-small>mdi-check</v-icon>
+                    Ditambahkan
+                  </div>
+                  <img v-if="menu.gambar" :src="menu.gambar" :alt="menu.nama">
+                  <v-icon v-else color="#c2372f" size="38">{{ menuIcon(menu) }}</v-icon>
+                </div>
+                <div class="mobile-menu-body">
+                  <h3>{{ menu.nama }}</h3>
+                  <p>{{ menu.deskripsi || 'Menu favorit Warung Bakso Tulus.' }}</p>
+                  <strong>Rp {{ formatCurrency(menu.harga) }}</strong>
+                  <button type="button" :class="{'is-added': isMenuAdded(menu)}" :disabled="menu.stok <= 0" @click="add(menu)">
+                    <v-icon small>{{ menu.stok > 0 ? (isMenuAdded(menu) ? 'mdi-check' : 'mdi-plus') : 'mdi-lock-outline' }}</v-icon>
+                  </button>
+                </div>
+              </article>
             </div>
           </div>
 
-          <div class="customer-hero-row d-flex justify-space-between align-center mb-6 animate-right">
-            <div>
-              <div class="greeting-text">MENU DIGITAL</div>
-              <div class="welcome-text">Lihat Menu</div>
-              <div class="customer-hero-copy">Pilih menu favorit, cek ringkasan pesanan, lalu kirim ke dapur.</div>
+        <div v-else-if="view === 'cart'" key="cart" class="mobile-cart-view">
+            <div class="mobile-page-head mobile-cart-head">
+              <div class="cart-title-block">
+                <h1>Pesanan Saya</h1>
+                <small>Meja {{ customer.no_meja || '-' }}</small>
+              </div>
             </div>
-            <div class="customer-order-summary-pill">
-              <v-icon color="#2563eb">mdi-cart-outline</v-icon>
+            <div v-if="cart.length" class="cart-count-line">{{ totalItem }} item dipilih</div>
+
+            <div v-if="!cart.length" class="customer-empty-card cart-empty-state">
+              <div class="empty-illustration cart-illustration">
+                <span class="empty-plate"></span>
+                <v-icon color="#c2372f" size="38">mdi-cart-outline</v-icon>
+                <i></i>
+              </div>
+              <strong>Keranjang masih kosong</strong>
+              <span>Pilih menu favorit dari daftar, nanti pesanan Anda muncul di sini.</span>
+              <button type="button" class="empty-action" @click="view = 'menu'">
+                Lihat menu
+                <v-icon x-small>mdi-arrow-right</v-icon>
+              </button>
+            </div>
+
+            <div v-else class="mobile-cart-list">
+              <div v-for="(item, index) in cart" :key="item.id_menu" class="mobile-cart-item">
+                <div class="cart-thumb"><v-icon color="#c2372f">{{ cartIcon(item) }}</v-icon></div>
+                <div class="cart-item-main">
+                  <strong>{{ item.nama }}</strong>
+                  <span>Rp {{ formatCurrency(item.harga) }}</span>
+                  <input v-model="item.keterangan" class="cart-item-note" type="text" placeholder="Catatan produk">
+                </div>
+                <div class="mobile-stepper">
+                  <button type="button" @click="decrement(item, index)">-</button>
+                  <b>{{ item.qty }}</b>
+                  <button type="button" @click="increment(item)">+</button>
+                </div>
+              </div>
+            </div>
+
+            <div v-if="cart.length" class="cart-checkout-stack">
+            <label class="mobile-label">Catatan Semua Pesanan</label>
+            <v-textarea v-model="keterangan" outlined dense rows="2" hide-details class="mobile-input cart-note-input mb-3" placeholder="Contoh: semua tidak pedas"></v-textarea>
+
+            <label class="mobile-label">Metode Pembayaran</label>
+            <div class="payment-options">
+              <button type="button" class="payment-method-card is-selected">
+                <span class="payment-method-icon"><v-icon small>mdi-cash</v-icon></span>
+                <span class="payment-method-copy">
+                  <strong>Tunai</strong>
+                  <small>Bayar langsung di kasir</small>
+                </span>
+                <v-icon small class="payment-check">mdi-check-circle</v-icon>
+              </button>
+            </div>
+
+            <div class="mobile-total-bar">
               <div>
-                <span>{{ totalItem }} item dipilih</span>
+                <span>Total</span>
                 <strong>Rp {{ formatCurrency(total) }}</strong>
               </div>
+              <v-btn class="btn-primary mobile-confirm-btn" depressed :disabled="!cart.length" @click="sendOrder">Konfirmasi</v-btn>
+            </div>
+            <inline-feedback :message="feedback.message" :type="feedback.type"></inline-feedback>
             </div>
           </div>
+        </transition>
 
-          <div class="customer-shop-layout">
-            <section class="customer-menu-section">
-              <div class="customer-menu-grid">
-                <article v-for="m in menus" :key="m.id_menu" class="customer-menu-card" :class="{'is-unavailable':m.stok<=0}">
-                  <div class="customer-menu-media">
-                    <img v-if="m.gambar" :src="m.gambar" :alt="m.nama">
-                    <v-icon v-else size="58" color="#2563eb">mdi-food</v-icon>
-                    <span class="customer-stock-badge" :class="m.stok > 0 ? 'stock-ready' : 'stock-empty'">
-                      {{ m.stok > 0 ? 'Stok ' + m.stok : 'Habis' }}
-                    </span>
-                  </div>
-                  <div class="customer-menu-content">
-                    <div class="customer-menu-name">{{ m.nama }}</div>
-                    <div class="customer-menu-desc">{{ m.deskripsi || 'Menu tersedia di Warung Bakso Tulus' }}</div>
-                    <div class="customer-menu-footer">
-                      <div class="customer-menu-price">Rp {{ formatCurrency(m.harga) }}</div>
-                      <v-btn icon class="customer-add-menu-btn" :disabled="m.stok<=0" @click="add(m)">
-                        <v-icon>{{ m.stok > 0 ? 'mdi-plus' : 'mdi-lock-outline' }}</v-icon>
-                      </v-btn>
-                    </div>
-                  </div>
-                </article>
-              </div>
-            </section>
-
-            <aside class="customer-order-panel">
-              <div class="customer-order-head">
-                <div>
-                  <div class="customer-order-eyebrow">Pesanan Meja {{ customer.no_meja || '-' }}</div>
-                  <div class="customer-order-title">Tambah Pesanan</div>
-                </div>
-                <v-chip small class="customer-order-count">{{ totalItem }} item</v-chip>
-              </div>
-
-              <div v-if="!cart.length" class="customer-cart-empty">
-                <v-icon size="54" color="#cbd5e1">mdi-cart-outline</v-icon>
-                <strong>Keranjang masih kosong</strong>
-                <span>Tekan tombol tambah pada menu yang tersedia.</span>
-              </div>
-
-              <div v-else class="customer-cart-list">
-                <div v-for="(item,index) in cart" :key="item.id_menu" class="customer-cart-item">
-                  <div class="customer-cart-info">
-                    <div class="customer-cart-name">{{ item.nama }}</div>
-                    <div class="customer-cart-price">Rp {{ formatCurrency(item.harga * item.qty) }}</div>
-                  </div>
-                  <div class="customer-cart-controls">
-                    <v-btn icon x-small class="customer-step-btn" @click="decrement(item)"><v-icon small>mdi-minus</v-icon></v-btn>
-                    <span>{{ item.qty }}</span>
-                    <v-btn icon x-small class="customer-step-btn" @click="increment(item)"><v-icon small>mdi-plus</v-icon></v-btn>
-                    <v-btn icon x-small class="customer-remove-btn" @click="removeCart(index)"><v-icon small>mdi-close</v-icon></v-btn>
-                  </div>
-                </div>
-              </div>
-
-              <v-textarea v-model="keterangan" class="customer-note-field" outlined dense rows="2" label="Keterangan pesanan"></v-textarea>
-
-              <div class="customer-total-box">
-                <div>
-                  <span>Total</span>
-                  <strong>Rp {{ formatCurrency(total) }}</strong>
-                </div>
-                <v-btn block class="btn-primary customer-send-order-btn" :disabled="!cart.length" @click="sendOrder">
-                  <v-icon left small>mdi-send</v-icon>Kirim Pesanan
-                </v-btn>
-              </div>
-            </aside>
-          </div>
-        </div>
+        <mobile-bottom-nav :active="view" :count="totalItem" :bump="cartBump" @change="handleNav"></mobile-bottom-nav>
       </div>
     </div>
   `,
-  data(){return{menus:[],cart:[],keterangan:''}},
-  computed:{
-    total(){ return this.cart.reduce((s,i)=>s+i.harga*i.qty,0) },
-    totalItem(){ return this.cart.reduce((s,i)=>s+i.qty,0) }
+  data() {
+    return {
+      menus: [],
+      cart: [],
+      keterangan: '',
+      paymentMethod: 'Tunai',
+      view: ['menu', 'cart'].includes(this.initialView) ? this.initialView : 'menu',
+      q: '',
+      activeCategory: '',
+      addedMenuId: null,
+      cartBump: false,
+      addAnimationTimer: null,
+      cartBumpTimer: null,
+      feedback: { message: '', type: 'info' }
+    }
   },
-  created(){
+  computed: {
+    firstName() {
+      return String((this.customer && this.customer.nama_pelanggan) || 'Pelanggan').split(' ')[0]
+    },
+    total() {
+      return this.cart.reduce((sum, item) => sum + item.harga * item.qty, 0)
+    },
+    totalItem() {
+      return this.cart.reduce((sum, item) => sum + item.qty, 0)
+    },
+    filteredMenus() {
+      return (this.menus || []).filter(menu => {
+        if (this.activeCategory && String(menu.kategori || '').toLowerCase() !== this.activeCategory.toLowerCase()) return false
+        if (this.q) {
+          const text = [menu.nama, menu.nama_menu, menu.kategori, menu.deskripsi].join(' ').toLowerCase()
+          if (!text.includes(this.q.toLowerCase())) return false
+        }
+        return true
+      })
+    },
+    categoryTabs() {
+      return [
+        { text: 'Semua', value: '', icon: 'mdi-silverware-fork-knife' },
+        { text: 'Bakso', value: 'Bakso', icon: 'mdi-bowl-mix' },
+        { text: 'Mie', value: 'Mie', icon: 'mdi-noodles' },
+        { text: 'Minuman', value: 'Minuman', icon: 'mdi-cup' }
+      ]
+    }
+  },
+  created() {
     this.restoreCartState()
+    this.applyInitialView()
     this.load()
   },
-  watch:{
-    cart:{
-      deep:true,
-      handler(){ this.saveCartState() }
+  watch: {
+    initialView() { this.applyInitialView() },
+    cart: {
+      deep: true,
+      handler() { this.saveCartState() }
     },
-    keterangan(){ this.saveCartState() }
+    keterangan() { this.saveCartState() },
+    paymentMethod() { this.saveCartState() },
+    view() { this.saveCartState() }
   },
-  methods:{
-    load(){ Api.getPublicMenu().then(r=>this.menus=r || []) },
-    add(menu){
-      if(menu.stok <= 0) return
-      const found=this.cart.find(i=>i.id_menu===menu.id_menu)
-      if(found){
-        if(found.qty >= menu.stok){ notify('Stok tidak cukup','error'); return }
-        found.qty++
-      }else{
-        this.cart.push({id_menu:menu.id_menu,nama:menu.nama,harga:menu.harga,qty:1})
+  beforeDestroy() {
+    clearTimeout(this.addAnimationTimer)
+    clearTimeout(this.cartBumpTimer)
+  },
+  methods: {
+    showFeedback(message, type='info') {
+      this.feedback = { message, type }
+    },
+    normalizePaymentMethod() {
+      return 'Tunai'
+    },
+    load() {
+      Api.getPublicMenu().then(data => { this.menus = data || [] })
+    },
+    menuKey(menu) {
+      return Number(menu.id_menu || menu.id)
+    },
+    isMenuAdded(menu) {
+      return this.addedMenuId === this.menuKey(menu)
+    },
+    playAddAnimation(menu) {
+      clearTimeout(this.addAnimationTimer)
+      clearTimeout(this.cartBumpTimer)
+      this.addedMenuId = null
+      this.cartBump = false
+      this.$nextTick(() => {
+        this.addedMenuId = this.menuKey(menu)
+        this.cartBump = true
+        this.addAnimationTimer = setTimeout(() => { this.addedMenuId = null }, 900)
+        this.cartBumpTimer = setTimeout(() => { this.cartBump = false }, 520)
+      })
+    },
+    handleNav(target) {
+      if (target === 'status') {
+        this.$emit('track')
+        return
       }
+      this.view = target
     },
-    increment(item){
-      const menu=this.menus.find(m=>m.id_menu===item.id_menu)
-      if(menu && item.qty >= menu.stok){ notify('Stok tidak cukup','error'); return }
+    applyInitialView() {
+      if (['menu', 'cart'].includes(this.initialView)) this.view = this.initialView
+    },
+    add(menu) {
+      if (menu.stok <= 0) return
+      const found = this.cart.find(item => Number(item.id_menu) === Number(menu.id_menu))
+      if (found) {
+        if (found.qty >= Number(menu.stok || 0)) { this.showFeedback('Stok tidak cukup', 'error'); return }
+        found.qty++
+      } else {
+        this.cart.push({ id_menu: menu.id_menu, nama: menu.nama, harga: Number(menu.harga || 0), qty: 1, kategori: menu.kategori, keterangan: '' })
+      }
+      this.playAddAnimation(menu)
+      this.showFeedback('', 'info')
+    },
+    increment(item) {
+      const menu = this.menus.find(menu => Number(menu.id_menu) === Number(item.id_menu))
+      if (menu && item.qty >= Number(menu.stok || 0)) { this.showFeedback('Stok tidak cukup', 'error'); return }
       item.qty++
+      this.showFeedback('', 'info')
     },
-    decrement(item){
-      item.qty=Math.max(1,item.qty-1)
+    decrement(item, index) {
+      if (item.qty <= 1) {
+        this.removeCart(index)
+        return
+      }
+      item.qty--
     },
-    removeCart(index){
-      this.cart.splice(index,1)
+    removeCart(index) {
+      this.cart.splice(index, 1)
     },
-    sendOrder(){
-      if(!this.cart.length){ notify('Pesanan masih kosong','error'); return }
-      const items=this.cart.map(i=>Object.assign({},i,{keterangan:this.keterangan}))
-      Api.createPublicOrder({nama_pelanggan:this.customer.nama_pelanggan,no_meja:this.customer.no_meja,items})
-        .then(res=>{
-          notify('Pesanan dikirim. Kode: '+res.kode_pesanan,'success',5000)
-          this.cart=[]
-          this.keterangan=''
-          this.clearCartState()
-          this.$emit('ordered',res.kode_pesanan)
-        }).catch(err=>notify(err.message || 'Gagal mengirim pesanan','error'))
+    sendOrder() {
+      if (!this.cart.length) { this.showFeedback('Pesanan masih kosong', 'error'); return }
+      const items = this.cart.map(item => Object.assign({}, item, {
+        keterangan: item.keterangan || '',
+        catatan_umum: this.keterangan || '',
+        metode_pembayaran: 'Tunai'
+      }))
+      Api.createPublicOrder({
+        nama_pelanggan: this.customer.nama_pelanggan,
+        no_meja: this.customer.no_meja,
+        keterangan: this.keterangan || '',
+        catatan_umum: this.keterangan || '',
+        items
+      }).then(res => {
+        this.cart = []
+        this.keterangan = ''
+        this.paymentMethod = 'Tunai'
+        this.clearCartState()
+        this.$emit('ordered', res.kode_pesanan)
+      }).catch(err => this.showFeedback(err.message || 'Gagal mengirim pesanan', 'error'))
     },
-    restoreCartState(){
-      const raw=localStorage.getItem('sip_customer_cart_state')
-      if(!raw) return
-      try{
-        const state=JSON.parse(raw)
-        this.cart=Array.isArray(state.cart) ? state.cart : []
-        this.keterangan=state.keterangan || ''
-      }catch(e){
+    restoreCartState() {
+      const raw = localStorage.getItem('sip_customer_cart_state')
+      if (!raw) return
+      try {
+        const state = JSON.parse(raw)
+        this.cart = Array.isArray(state.cart) ? state.cart.map(item => Object.assign({ keterangan: '' }, item)) : []
+        this.keterangan = state.keterangan || ''
+        this.paymentMethod = this.normalizePaymentMethod(state.paymentMethod)
+        if (['menu', 'cart'].includes(state.view)) this.view = state.view
+      } catch (err) {
         localStorage.removeItem('sip_customer_cart_state')
       }
     },
-    saveCartState(){
+    saveCartState() {
       localStorage.setItem('sip_customer_cart_state', JSON.stringify({
-        cart:this.cart,
-        keterangan:this.keterangan
+        cart: this.cart,
+        keterangan: this.keterangan,
+        paymentMethod: 'Tunai',
+        view: this.view
       }))
     },
-    clearCartState(){
+    clearCartState() {
       localStorage.removeItem('sip_customer_cart_state')
     },
-    formatCurrency(v){ return Number(v || 0).toLocaleString('id-ID') }
+    menuIcon(menu) {
+      const text = ((menu.nama || menu.nama_menu || '') + ' ' + (menu.kategori || '')).toLowerCase()
+      if (text.includes('teh') || text.includes('jeruk') || text.includes('minum')) return 'mdi-cup'
+      if (text.includes('mie')) return 'mdi-noodles'
+      if (text.includes('kerupuk') || text.includes('lain')) return 'mdi-cookie-outline'
+      return 'mdi-bowl-mix'
+    },
+    cartIcon(item) {
+      return this.menuIcon(item)
+    },
+    formatCurrency(value) {
+      return Number(value || 0).toLocaleString('id-ID')
+    }
   }
 })
 
-Vue.component('customer-tracking-page',{
-  props:['initialCode'],
-  template:`
-    <v-container fluid class="login-wrapper">
-      <div class="login-card-blue animate-up" style="max-width:760px;">
-        <div class="d-flex justify-space-between align-center mb-4">
-          <div>
-            <h1 style="color:#1e3a8a;font-size:24px;font-weight:800;margin-bottom:4px;">Tracking Pesanan</h1>
-            <p style="color:#64748b;font-size:14px;margin:0;">Cek status pesanan berdasarkan kode pesanan</p>
+Vue.component('customer-tracking-page', {
+  props: ['initialCode', 'orderCodes', 'customer'],
+  template: `
+    <div class="customer-stage">
+      <div class="mobile-app-screen tracking-screen" :class="statusClass(currentStatus)">
+        <div class="mobile-page-head tracking-head">
+          <div class="tracking-title-block">
+            <h1>Status Pesanan</h1>
           </div>
-          <v-btn icon @click="$emit('back-menu')"><v-icon>mdi-close</v-icon></v-btn>
         </div>
-        <v-row align="center">
-          <v-col cols="12" md="9">
-            <v-text-field v-model="code" outlined dense hide-details label="Kode Pesanan" prepend-inner-icon="mdi-ticket-confirmation"></v-text-field>
-          </v-col>
-          <v-col cols="12" md="3">
-            <v-btn class="btn-primary" block @click="track">Cek Status</v-btn>
-          </v-col>
-        </v-row>
-        <v-divider class="my-5"></v-divider>
-        <v-data-table :headers="headers" :items="orders" class="modern-table" hide-default-footer>
-          <template v-slot:item.status="{item}">
-            <v-chip small :color="statusColor(item.status)" text-color="white">{{ item.status }}</v-chip>
-          </template>
-        </v-data-table>
+        <inline-feedback :message="feedback.message" :type="feedback.type"></inline-feedback>
+
+        <div v-if="!knownCodes.length" class="customer-empty-card tracking-empty-state">
+          <div class="empty-illustration status-illustration">
+            <v-icon color="#c2372f" size="38">mdi-clipboard-text-clock-outline</v-icon>
+            <span class="empty-dot one"></span>
+            <span class="empty-dot two"></span>
+          </div>
+          <strong>Belum ada pesanan</strong>
+          <span>Pesanan yang sudah dikirim akan muncul otomatis di halaman ini.</span>
+        </div>
+
+        <template v-else>
+          <div v-if="showOrderList" class="tracking-order-list">
+            <button
+              v-for="summary in orderSummaries"
+              :key="summary.kode"
+              type="button"
+              :class="[{active: selectedCode === summary.kode}, statusClass(summary.status)]"
+              @click="selectOrder(summary.kode)"
+            >
+              <span class="tracking-order-icon" :class="statusClass(summary.status)">
+                <v-icon>{{ summary.icon }}</v-icon>
+                <em>{{ summary.count || 0 }}</em>
+              </span>
+              <span class="tracking-order-copy">
+                <strong>{{ summary.title }}</strong>
+                <small>{{ summary.count }} item - Meja {{ summary.meja || '-' }}</small>
+              </span>
+              <span class="tracking-order-status" :class="statusClass(summary.status)">{{ statusLabel(summary.status) }}</span>
+            </button>
+          </div>
+
+          <div v-if="selectedCode" class="tracking-summary" :class="statusClass(currentStatus)">
+            <div class="tracking-icon">
+              <span class="tracking-pulse"></span>
+              <v-icon size="36">{{ trackingIcon }}</v-icon>
+            </div>
+            <span class="tracking-hero-badge">{{ statusLabel(currentStatus) }}</span>
+            <h2>{{ trackingTitle }}</h2>
+            <p>{{ trackingSubtitle }}</p>
+            <div class="tracking-code">
+              <span>Pesanan</span>
+              <strong>{{ selectedSummary.title }}</strong>
+              <span>Meja</span>
+              <strong>{{ selectedSummary.meja || '-' }}</strong>
+            </div>
+          </div>
+
+          <div v-if="selectedOrders.length" class="tracking-items-card" :class="statusClass(currentStatus)">
+            <div class="tracking-items-head">
+              <span>Pesanan dibeli</span>
+              <small>{{ selectedSummary.count }} item</small>
+            </div>
+            <div v-for="item in selectedOrders" :key="item.id_pesanan || item.id_menu || item.nama_menu" class="tracking-item-row">
+              <span class="tracking-item-icon" :class="statusClass(currentStatus)"><v-icon small>{{ orderIcon([item]) }}</v-icon></span>
+              <div>
+                <strong>{{ orderItemName(item) }}</strong>
+                <small v-if="orderItemNote(item)">Catatan: {{ orderItemNote(item) }}</small>
+              </div>
+              <b>x{{ Number(item.qty || 0) }}</b>
+            </div>
+          </div>
+
+          <div v-if="!selectedCode" class="customer-empty-card tracking-select-empty">
+            <div class="empty-illustration tap-illustration">
+              <v-icon color="#c2372f" size="34">mdi-gesture-tap-button</v-icon>
+              <span class="tap-ring"></span>
+            </div>
+            <strong>Pilih pesanan</strong>
+            <span>Tekan salah satu kartu pesanan di atas untuk membuka progressnya.</span>
+          </div>
+
+          <div v-if="selectedCode" class="progress-card" :class="statusClass(currentStatus)">
+            <div class="mobile-section-title">Progress</div>
+            <div v-for="step in progressSteps" :key="step.key" class="progress-step" :class="{done: step.done, current: step.current}">
+              <div class="progress-dot"><v-icon small>{{ step.icon }}</v-icon></div>
+              <div>
+                <strong>{{ step.label }}</strong>
+                <span>{{ step.description }}</span>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <mobile-bottom-nav active="status" :count="0" @change="handleNav"></mobile-bottom-nav>
       </div>
-    </v-container>
+    </div>
   `,
-  data(){return{code:this.initialCode || '',orders:[],headers:[{text:'Menu',value:'nama_menu'},{text:'Qty',value:'qty'},{text:'Status',value:'status'},{text:'Keterangan',value:'keterangan'}]}},
-  mounted(){ if(this.code) this.track() },
-  methods:{
-    track(){
-      if(!this.code){ notify('Isi kode pesanan','error'); return }
-      Api.trackPesanan(this.code).then(r=>{ this.orders=r.pesanan || [] })
-        .catch(()=>{ this.orders=[]; notify('Kode pesanan tidak ditemukan','error') })
+  data() {
+    return {
+      selectedCode: '',
+      orderMap: {},
+      loading: false,
+      pollTimer: null,
+      feedback: { message: '', type: 'info' }
+    }
+  },
+  computed: {
+    knownCodes() {
+      return [this.initialCode].concat(this.orderCodes || []).filter((value, index, list) => value && list.indexOf(value) === index)
     },
-    statusColor(s){ return s==='selesai' ? 'success' : (s==='diproses' ? 'primary' : (s==='dibatalkan' ? 'error' : 'warning')) }
+    showOrderList() {
+      return this.knownCodes.length > 1
+    },
+    selectedOrders() {
+      return this.selectedCode ? (this.orderMap[this.selectedCode] || []) : []
+    },
+    selectedSummary() {
+      return this.summaryFor(this.selectedCode, this.selectedOrders, this.knownCodes.indexOf(this.selectedCode))
+    },
+    orderSummaries() {
+      return this.knownCodes.map((code, index) => this.summaryFor(code, this.orderMap[code] || [], index))
+    },
+    currentStatus() {
+      return this.statusForOrders(this.selectedOrders)
+    },
+    trackingTitle() {
+      const map = { baru: 'Menunggu Konfirmasi', diproses: 'Sedang Disiapkan', selesai: 'Pesanan Selesai', dibatalkan: 'Pesanan Dibatalkan' }
+      return map[this.currentStatus] || 'Status Pesanan'
+    },
+    trackingSubtitle() {
+      const map = {
+        baru: 'Pesanan masuk ke sistem.',
+        diproses: 'Pesanan sedang disiapkan.',
+        selesai: 'Pesanan sudah selesai diproses.',
+        dibatalkan: 'Pesanan dibatalkan oleh admin.'
+      }
+      return map[this.currentStatus] || ''
+    },
+    trackingIcon() {
+      const map = {
+        baru: 'mdi-timer-sand',
+        diproses: 'mdi-chef-hat',
+        selesai: 'mdi-check-circle-outline',
+        dibatalkan: 'mdi-close-circle-outline'
+      }
+      return map[this.currentStatus] || 'mdi-pot-steam-outline'
+    },
+    progressSteps() {
+      const order = ['baru', 'diproses', 'selesai']
+      const index = Math.max(0, order.indexOf(this.currentStatus))
+      const cancelled = this.currentStatus === 'dibatalkan'
+      if (cancelled) {
+        return [
+          { key: 'baru', label: 'Pesanan Diterima', description: 'Pesanan masuk ke sistem', icon: 'mdi-check', done: true, current: false },
+          { key: 'dibatalkan', label: 'Pesanan Dibatalkan', description: 'Dibatalkan oleh admin', icon: 'mdi-close', done: true, current: true }
+        ]
+      }
+      return [
+        { key: 'baru', label: 'Pesanan Diterima', description: 'Pesanan masuk ke sistem', icon: 'mdi-check', done: index >= 0, current: this.currentStatus === 'baru' },
+        { key: 'diproses', label: 'Dikonfirmasi Admin', description: 'Diterima oleh kasir', icon: 'mdi-check', done: index >= 1, current: this.currentStatus === 'diproses' },
+        { key: 'selesai', label: this.currentStatus === 'selesai' ? 'Pesanan Selesai' : 'Sedang Disiapkan', description: this.currentStatus === 'selesai' ? 'Pesanan siap diambil' : 'Dapur sedang memproses', icon: this.currentStatus === 'selesai' ? 'mdi-check-all' : 'mdi-pot-steam-outline', done: index >= 2, current: this.currentStatus === 'selesai' }
+      ]
+    }
+  },
+  watch: {
+    knownCodes() {
+      this.prepareSelection()
+      this.refreshOrders(true)
+    }
+  },
+  mounted() {
+    this.prepareSelection()
+    this.refreshOrders()
+    this.pollTimer = setInterval(() => this.refreshOrders(true), 3000)
+  },
+  beforeDestroy() {
+    if (this.pollTimer) clearInterval(this.pollTimer)
+  },
+  methods: {
+    showFeedback(message, type='info') {
+      this.feedback = { message, type }
+    },
+    prepareSelection() {
+      if (this.knownCodes.length === 1) this.selectedCode = this.knownCodes[0]
+      else if (this.selectedCode && !this.knownCodes.includes(this.selectedCode)) this.selectedCode = ''
+    },
+    refreshOrders(silent=false) {
+      if (!this.knownCodes.length) return
+      if (!silent) this.loading = true
+      Promise.all(this.knownCodes.map(code => {
+        return Api.trackPesanan(code)
+          .then(res => ({ code, orders: res.pesanan || [] }))
+          .catch(() => ({ code, orders: [] }))
+      })).then(results => {
+        results.forEach(result => this.$set(this.orderMap, result.code, result.orders))
+        if (!this.selectedCode && this.knownCodes.length === 1) this.selectedCode = this.knownCodes[0]
+        this.showFeedback('', 'info')
+      }).catch(() => {
+        if (!silent) this.showFeedback('Gagal memuat status pesanan', 'error')
+      }).then(() => { this.loading = false })
+    },
+    selectOrder(code) {
+      this.selectedCode = code
+    },
+    orderItemName(item) {
+      return item.nama_menu || item.nama || 'Menu'
+    },
+    orderItemNote(item) {
+      return item.keterangan_produk || item.catatan_produk || item.keterangan || ''
+    },
+    summaryFor(code, orders, index) {
+      const status = this.statusForOrders(orders)
+      const qty = (orders || []).reduce((sum, item) => sum + Number(item.qty || 0), 0)
+      const orderNumber = Number(index || 0) + 1
+      return {
+        kode: code,
+        title: this.knownCodes.length > 1 ? 'Pesanan ' + orderNumber : 'Pesanan aktif',
+        icon: this.orderIcon(orders),
+        status,
+        count: qty || (orders || []).length || 0,
+        meja: (orders && orders[0] && orders[0].no_meja) || (this.customer && this.customer.no_meja) || '-'
+      }
+    },
+    orderIcon(orders) {
+      const text = (orders || []).map(item => [item.nama_menu, item.nama, item.kategori].join(' ')).join(' ').toLowerCase()
+      if (text.includes('teh') || text.includes('jeruk') || text.includes('minum')) return 'mdi-cup'
+      if (text.includes('mie')) return 'mdi-noodles'
+      if (text.includes('kerupuk') || text.includes('lain')) return 'mdi-cookie-outline'
+      return 'mdi-bowl-mix'
+    },
+    statusForOrders(orders) {
+      if (!orders || !orders.length) return 'baru'
+      if (orders.some(item => item.status === 'dibatalkan')) return 'dibatalkan'
+      if (orders.every(item => item.status === 'selesai')) return 'selesai'
+      if (orders.some(item => item.status === 'diproses')) return 'diproses'
+      return 'baru'
+    },
+    statusLabel(status) {
+      const map = { baru: 'Menunggu', diproses: 'Diproses', selesai: 'Selesai', dibatalkan: 'Batal' }
+      return map[status] || 'Menunggu'
+    },
+    statusClass(status) {
+      const map = { baru: 'is-waiting', diproses: 'is-process', selesai: 'is-done', dibatalkan: 'is-cancelled' }
+      return map[status] || 'is-waiting'
+    },
+    handleNav(target) {
+      if (target === 'menu' || target === 'cart') this.$emit('back-menu', target)
+    }
   }
+})
+
+Vue.component('mobile-bottom-nav', {
+  props: ['active', 'count', 'bump'],
+  template: `
+    <div class="mobile-bottom-nav">
+      <button type="button" :class="{active: active === 'menu'}" @click="$emit('change', 'menu')">
+        <v-icon small>mdi-silverware-fork-knife</v-icon>
+        Menu
+      </button>
+      <button type="button" :class="{active: active === 'cart', 'is-bumping': bump}" @click="$emit('change', 'cart')">
+        <span class="nav-icon-wrap">
+          <v-icon small>mdi-cart-outline</v-icon>
+          <span v-if="count" class="nav-count-badge">{{ count }}</span>
+        </span>
+        Pesanan
+      </button>
+      <button type="button" :class="{active: active === 'status'}" @click="$emit('change', 'status')">
+        <v-icon small>mdi-clock-check-outline</v-icon>
+        Status
+      </button>
+    </div>
+  `
 })

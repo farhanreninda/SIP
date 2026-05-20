@@ -1,6 +1,24 @@
 const pool = require('../../config/mysql')
 
+function parseNotes(value) {
+  const raw = String(value || '')
+  if (!raw) return { item: '', umum: '' }
+
+  try {
+    const data = JSON.parse(raw)
+    if (data && typeof data === 'object' && ('item' in data || 'umum' in data)) {
+      return {
+        item: String(data.item || ''),
+        umum: String(data.umum || '')
+      }
+    }
+  } catch (error) {}
+
+  return { item: raw, umum: '' }
+}
+
 function mapPesanan(row) {
+  const notes = parseNotes(row.keterangan)
   return {
     id: row.id_pesanan,
     id_pesanan: row.id_pesanan,
@@ -14,7 +32,10 @@ function mapPesanan(row) {
     harga: Number(row.harga || 0),
     qty: Number(row.qty || 0),
     subtotal: Number(row.subtotal || 0),
-    keterangan: row.keterangan || '',
+    keterangan: notes.item,
+    keterangan_produk: notes.item,
+    catatan_produk: notes.item,
+    catatan_umum: notes.umum,
     status: row.status,
     tgl_pesanan: row.tgl_pesanan
   }

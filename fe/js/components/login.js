@@ -3,71 +3,77 @@ Vue.component('login-page', {
     showCustomerLink: {
       type: Boolean,
       default: true
+    },
+    initialFeedback: {
+      type: Object,
+      default: () => ({ message: '', type: 'info' })
     }
   },
   template: `
-    <v-container fluid class="login-wrapper">
-      <div class="login-card-blue animate-up">
-        <div class="text-center mb-6">
-          <div class="d-inline-flex align-center justify-center mb-4" style="background: white; color: #2563eb; width: 64px; height: 64px; border-radius: 50%; font-weight: bold; font-size: 20px; border: 2px dashed #2563eb;">
-            SIP
+    <v-container fluid class="auth-screen">
+      <div class="auth-panel animate-up" :class="{'is-shaking': shake}">
+        <div class="auth-heading">
+          <div class="brand-mark auth-brand-mark">
+            <v-icon color="white">mdi-noodles</v-icon>
           </div>
-          <h1 class="animate-up delay-1" style="color: #1e3a8a; font-size: 24px; font-weight: 800; margin-bottom: 8px;">Sistem Informasi Penjualan</h1>
-          <p class="animate-up delay-2" style="color: #64748b; font-size: 14px;">Masuk untuk melanjutkan ke aplikasi</p>
+          <h1>Selamat datang <v-icon color="#c2372f">mdi-hand-wave-outline</v-icon></h1>
+          <p>Masuk untuk mulai mengelola warung Anda hari ini.</p>
         </div>
 
-        <v-progress-linear v-if="loading" indeterminate color="#2563eb" height="3" class="mb-4"></v-progress-linear>
+        <v-progress-linear v-if="loading" indeterminate color="#c2372f" height="3" class="mb-4"></v-progress-linear>
 
-        <v-form ref="form" @submit.prevent="login" @keydown.enter.native.prevent="login" @keyup.enter.native.prevent="login">
-          <div class="mb-4">
-            <label style="display: block; font-size: 13px; font-weight: 700; color: #475569; margin-bottom: 8px; text-transform: uppercase;">Email / Username</label>
-            <v-text-field 
-              v-model="username" 
-              outlined 
-              dense 
-              hide-details="auto"
-              prepend-inner-icon="mdi-account-outline"
-              @keydown.enter.native.prevent="login"
-              @keyup.enter.native.prevent="login"
-            ></v-text-field>
+        <v-form ref="form" class="auth-form" @submit.prevent="login" @keydown.enter.native.prevent="login" @keyup.enter.native.prevent="login">
+          <label class="auth-label">Username</label>
+          <v-text-field
+            v-model="username"
+            outlined
+            hide-details="auto"
+            prepend-inner-icon="mdi-account"
+            class="auth-input mb-5"
+            placeholder="admin"
+            @keydown.enter.native.prevent="login"
+            @keyup.enter.native.prevent="login"
+          ></v-text-field>
+
+          <label class="auth-label">Password</label>
+          <v-text-field
+            v-model="password"
+            :type="showPassword ? 'text' : 'password'"
+            :append-icon="showPassword ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
+            @click:append="showPassword = !showPassword"
+            prepend-inner-icon="mdi-lock"
+            outlined
+            hide-details="auto"
+            class="auth-input mb-3"
+            @keydown.native="handleKeyEvent"
+            @keydown.enter.native.prevent="login"
+            @keyup.enter.native.prevent="login"
+            @keyup.native="handleKeyEvent"
+          ></v-text-field>
+
+          <div v-if="capsLock" class="mb-2 text-right">
+            <v-chip small color="warning" text-color="white">Caps Lock aktif</v-chip>
           </div>
 
-          <div class="mb-2">
-            <label style="display: block; font-size: 13px; font-weight: 700; color: #475569; margin-bottom: 8px; text-transform: uppercase;">Kata Sandi</label>
-            <v-text-field
-              v-model="password"
-              :type="showPassword ? 'text' : 'password'"
-              :append-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
-              @click:append="showPassword = !showPassword"
-              prepend-inner-icon="mdi-lock-outline"
-              outlined 
-              dense 
-              hide-details="auto"
-              @keydown.native="handleKeyEvent"
-              @keydown.enter.native.prevent="login"
-              @keyup.enter.native.prevent="login"
-              @keyup.native="handleKeyEvent"
-            ></v-text-field>
+          <div class="auth-options">
+            <v-checkbox v-model="remember" label="Ingat saya" hide-details class="auth-check mt-0 pt-0"></v-checkbox>
+            <a href="#" @click.prevent="forgot">Lupa password?</a>
           </div>
 
-          <div v-if="capsLock" class="mb-2 text-right"><v-chip small color="warning" text-color="white">Caps Lock aktif</v-chip></div>
+          <v-btn :loading="loading" class="btn-primary auth-submit" block x-large type="submit">
+            Masuk ke Dashboard
+            <v-icon right small>mdi-arrow-right</v-icon>
+          </v-btn>
+          <inline-feedback :message="feedback.message" :type="feedback.type"></inline-feedback>
 
-          <div class="d-flex justify-space-between align-center mb-8 mt-2">
-            <v-checkbox v-model="remember" label="Ingat saya" hide-details class="mt-0 pt-0"></v-checkbox>
-            <a href="#" @click.prevent="forgot" style="color: #2563eb; font-weight: 600; text-decoration: none; font-size: 14px;">Lupa kata sandi?</a>
-          </div>
-
-          <v-alert v-if="error" type="error" dense text class="mb-4">{{error}}</v-alert>
-
-          <v-btn :loading="loading" class="btn-primary" block large type="submit">MASUK SEKARANG</v-btn>
-          <v-btn v-if="showCustomerLink" text block class="mt-3 text-none font-weight-bold" color="primary" @click="$emit('customer-start')">
+          <v-btn v-if="showCustomerLink" text block class="mt-4 text-none font-weight-bold" color="#c2372f" @click="$emit('customer-start')">
             <v-icon left small>mdi-qrcode-scan</v-icon>
             Scan Barcode Menu Pelanggan
           </v-btn>
         </v-form>
 
-        <div class="text-center mt-6 text-muted" style="font-size: 14px;">
-          Belum punya akun? <a href="#" style="color: #2563eb; font-weight: 600; text-decoration: none;">Hubungi Admin</a>
+        <div class="auth-footnote">
+          Hanya untuk pegawai warung. Hubungi pemilik untuk akses baru.
         </div>
       </div>
     </v-container>
@@ -75,72 +81,69 @@ Vue.component('login-page', {
   data() {
     return {
       username: localStorage.getItem('savedUsername') || '',
-      password: '',
-      error: '',
-      remember: false,
+      password: localStorage.getItem('savedPassword') || '',
+      feedback: Object.assign({ message: '', type: 'info' }, this.initialFeedback || {}),
+      remember: !!localStorage.getItem('savedUsername'),
       showPassword: false,
       loading: false,
-      success: false,
       capsLock: false,
-      shake: false,
-      welcomeText: '',
-      _welcomeFull: 'Selamat datang di SIP',
-      _welcomeTimer: null
-    };
+      shake: false
+    }
   },
-  mounted() {
-    this.startWelcomeTyping();
-  },
-  beforeDestroy() {
-    if (this._welcomeTimer) clearInterval(this._welcomeTimer);
+  watch: {
+    initialFeedback: {
+      deep: true,
+      handler(value) {
+        this.feedback = Object.assign({ message: '', type: 'info' }, value || {})
+      }
+    }
   },
   methods: {
-    forgot() { notify('Fitur lupa password belum tersedia', 'info') },
-    handleKeyEvent(e) { try { this.capsLock = e.getModifierState && e.getModifierState('CapsLock') } catch (e) { } },
-    startWelcomeTyping() {
-      const full = this._welcomeFull;
-      let i = 0;
-      this._welcomeTimer = setInterval(() => {
-        if (i <= full.length) {
-          this.welcomeText = full.slice(0, i);
-          i++;
-        } else {
-          clearInterval(this._welcomeTimer);
-          this._welcomeTimer = null;
-        }
-      }, 60);
+    showFeedback(message, type='info') {
+      this.feedback = { message, type }
+    },
+    forgot() { this.showFeedback('Fitur lupa password belum tersedia', 'info') },
+    handleKeyEvent(e) {
+      try { this.capsLock = e.getModifierState && e.getModifierState('CapsLock') } catch (err) { }
     },
     triggerShake() {
-      this.shake = true;
-      setTimeout(() => this.shake = false, 600);
+      this.shake = true
+      setTimeout(() => { this.shake = false }, 600)
     },
     login() {
-      if (this.loading) return;
-      this.error = '';
-      if (!this.username || !this.password) { this.error = 'Isi username dan password'; notify('Isi username dan password', 'error'); this.triggerShake(); return; }
-      this.loading = true;
+      if (this.loading) return
+      this.showFeedback('', 'info')
+      if (!this.username || !this.password) {
+        this.showFeedback('Isi username dan password', 'error')
+        this.triggerShake()
+        return
+      }
+
+      this.loading = true
       Api.login({ username: this.username, password: this.password })
         .then(res => {
-          this.loading = false;
+          this.loading = false
           if (res && res.success) {
-            this.success = true;
-            localStorage.setItem('currentUser', JSON.stringify(res.user));
-            if (this.remember) localStorage.setItem('savedUsername', this.username);
-            else localStorage.removeItem('savedUsername');
-            notify('Login berhasil', 'success');
-            setTimeout(() => { this.$emit('login-success', res.user) }, 700);
+            localStorage.setItem('currentUser', JSON.stringify(res.user))
+            if (this.remember) {
+              localStorage.setItem('savedUsername', this.username)
+              localStorage.setItem('savedPassword', this.password)
+            } else {
+              localStorage.removeItem('savedUsername')
+              localStorage.removeItem('savedPassword')
+            }
+            this.showFeedback('Login berhasil', 'success')
+            setTimeout(() => { this.$emit('login-success', res.user) }, 350)
           } else {
-            this.error = 'Login gagal: periksa username/password';
-            notify('Login gagal: periksa username/password', 'error');
-            this.triggerShake();
+            this.showFeedback('Login gagal: periksa username/password', 'error')
+            this.triggerShake()
           }
         }).catch(err => {
-          this.loading = false;
-          console.error(err);
-          this.error = 'Terjadi kesalahan koneksi';
-          notify('Terjadi kesalahan koneksi', 'error');
-          this.triggerShake();
-        });
+          this.loading = false
+          console.error(err)
+          this.showFeedback('Terjadi kesalahan koneksi', 'error')
+          this.triggerShake()
+        })
     }
   }
-});
+})

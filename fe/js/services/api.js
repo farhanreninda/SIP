@@ -2,19 +2,32 @@
 const Api = (function(){
   const LS_KEY = 'penjualan_v1'
   const TOKEN_KEY = 'token'
+  const SESSION_EXPIRES_KEY = 'sip_admin_session_expires_at'
+  const SESSION_TTL_MS = 8 * 60 * 60 * 1000
   const BACKEND_BASE = (window.API_BASE_URL) ? window.API_BASE_URL : 'http://localhost:3000'
   const API_PREFIX = '/v1'
 
   function _loadLocal(){
     const raw = localStorage.getItem(LS_KEY)
-    if(raw) return JSON.parse(raw)
+    if(raw){
+      const state = JSON.parse(raw)
+      if (Array.isArray(state.transactions)) {
+        state.transactions = state.transactions.map(tx => Object.assign({}, tx, { metode_pembayaran: 'Tunai' }))
+      }
+      localStorage.setItem(LS_KEY, JSON.stringify(state))
+      return state
+    }
     const initial = {
       users:[
         {id:1,username:'admin',password:'admin',role:'admin'}
       ],
       products:[
-        {id:1,id_menu:1,nama:'Baso Besar',nama_menu:'Baso Besar',kategori:'Makanan',harga:17000,modal:10000,stok:20,deskripsi:'Bakso ukuran besar',gambar:''},
-        {id:2,id_menu:2,nama:'Baso Kecil',nama_menu:'Baso Kecil',kategori:'Makanan',harga:10000,modal:6000,stok:20,deskripsi:'Bakso ukuran kecil',gambar:''}
+        {id:1,id_menu:1,nama:'Bakso Urat Jumbo',nama_menu:'Bakso Urat Jumbo',kategori:'Bakso',harga:20000,modal:11000,stok:24,deskripsi:'3 butir bakso urat, mie, sayur, dan kuah kaldu sup.',gambar:''},
+        {id:2,id_menu:2,nama:'Bakso Beranak',nama_menu:'Bakso Beranak',kategori:'Bakso',harga:25000,modal:15000,stok:3,deskripsi:'Bakso besar berisi telur puyuh.',gambar:''},
+        {id:3,id_menu:3,nama:'Bakso Halus',nama_menu:'Bakso Halus',kategori:'Bakso',harga:18000,modal:10000,stok:32,deskripsi:'5 butir bakso halus dengan mie tipis.',gambar:''},
+        {id:4,id_menu:4,nama:'Mie Ayam Bakso',nama_menu:'Mie Ayam Bakso',kategori:'Mie',harga:22000,modal:13000,stok:15,deskripsi:'Mie ayam dengan dua bakso urat.',gambar:''},
+        {id:5,id_menu:5,nama:'Es Teh Manis',nama_menu:'Es Teh Manis',kategori:'Minuman',harga:5000,modal:2000,stok:0,deskripsi:'Gelas besar, manis menyegarkan.',gambar:''},
+        {id:6,id_menu:6,nama:'Kerupuk',nama_menu:'Kerupuk',kategori:'Lainnya',harga:5000,modal:1500,stok:54,deskripsi:'Kerupuk udang renyah per pcs.',gambar:''}
       ],
       pelanggan:[],
       pesanan:[],
@@ -27,19 +40,117 @@ const Api = (function(){
   function _saveLocal(state){ localStorage.setItem(LS_KEY,JSON.stringify(state)) }
   function _genId(list,key='id'){ return list.length? Math.max(...list.map(i=>Number(i[key] || i.id || 0)))+1:1 }
   function _kode(prefix){ return prefix + '-' + Date.now().toString(36).toUpperCase() }
+
+  function _decodeJwtPayload(token){
+    try{
+      const payload = token.split('.')[1]
+      if(!payload) return null
+      const base64 = payload.replace(/-/g,'+').replace(/_/g,'/')
+      const json = decodeURIComponent(Array.prototype.map.call(atob(base64), c => {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+      }).join(''))
+      return JSON.parse(json)
+    }catch(e){
+      return null
+    }
+  }
+
+  function _tokenExpiryMs(token){
+    const payload = _decodeJwtPayload(token)
+    return payload && payload.exp ? payload.exp * 1000 : 0
+  }
+
+  function _setSessionExpiry(token){
+    const tokenExpiry = token ? _tokenExpiryMs(token) : 0
+    const expiresAt = tokenExpiry || (Date.now() + SESSION_TTL_MS)
+    localStorage.setItem(SESSION_EXPIRES_KEY, String(expiresAt))
+  }
+
+  function _getSessionExpiry(){
+    const token = localStorage.getItem(TOKEN_KEY)
+    const storedExpiry = Number(localStorage.getItem(SESSION_EXPIRES_KEY) || 0)
+    const tokenExpiry = token ? _tokenExpiryMs(token) : 0
+    return tokenExpiry || storedExpiry
+  }
+
+  function _hasValidAdminSession(){
+    const token = localStorage.getItem(TOKEN_KEY)
+    const user = localStorage.getItem('currentUser')
+    const expiresAt = _getSessionExpiry()
+    return !!(token && user && expiresAt && expiresAt > Date.now())
+  }
+
+  function _clearSession(){
+    localStorage.removeItem(TOKEN_KEY)
+    localStorage.removeItem(SESSION_EXPIRES_KEY)
+    localStorage.removeItem('currentUser')
+  }
+
+  function _handleUnauthorized(){
+    _clearSession()
+    try{
+      window.dispatchEvent(new CustomEvent('sip:auth-expired'))
+    }catch(e){
+      window.location.reload()
+    }
+  }
+
+  function _normalizeCategory(m){
+    const raw = (m.kategori || '').trim()
+    const name = String(m.nama || m.nama_menu || '').toLowerCase()
+    if(raw && raw.toLowerCase() !== 'makanan' && raw.toLowerCase() !== 'umum') return raw
+    if(name.includes('mie')) return 'Mie'
+    if(name.includes('teh') || name.includes('jeruk') || name.includes('minum')) return 'Minuman'
+    if(name.includes('kerupuk') || name.includes('cemilan')) return 'Lainnya'
+    return 'Bakso'
+  }
+
   function _normalizeMenu(m){
     return {
       id: m.id || m.id_menu,
       id_menu: m.id_menu || m.id,
       nama: m.nama || m.nama_menu,
       nama_menu: m.nama_menu || m.nama,
-      kategori: m.kategori || 'Umum',
+      kategori: _normalizeCategory(m),
       harga: Number(m.harga) || 0,
       modal: Number(m.modal) || 0,
       stok: Number(m.stok) || 0,
       gambar: m.gambar || '',
       deskripsi: m.deskripsi || ''
     }
+  }
+
+  function _normalizePaymentMethod(value){
+    return 'Tunai'
+  }
+
+  function _encodeOrderNotes(itemNote, generalNote){
+    const item = String(itemNote || '').trim()
+    const umum = String(generalNote || '').trim()
+    if(!umum) return item
+    return JSON.stringify({ item, umum })
+  }
+
+  function _decodeOrderNotes(value){
+    const raw = String(value || '')
+    if(!raw) return { item: '', umum: '' }
+    try{
+      const data = JSON.parse(raw)
+      if(data && typeof data === 'object' && ('item' in data || 'umum' in data)){
+        return { item: String(data.item || ''), umum: String(data.umum || '') }
+      }
+    }catch(e){}
+    return { item: raw, umum: '' }
+  }
+
+  function _normalizeOrderRow(row){
+    const notes = _decodeOrderNotes(row.keterangan)
+    return Object.assign({}, row, {
+      keterangan: notes.item,
+      keterangan_produk: notes.item,
+      catatan_produk: notes.item,
+      catatan_umum: row.catatan_umum || notes.umum || ''
+    })
   }
 
   const localApi = {
@@ -71,7 +182,7 @@ const Api = (function(){
     deleteMenu(id){
       return new Promise(resolve=>{ const s=_loadLocal(); s.products=s.products.filter(x=>(x.id || x.id_menu)!==id); _saveLocal(s); resolve(true) })
     },
-    getPesanan(){ return Promise.resolve(_loadLocal().pesanan || []) },
+    getPesanan(){ return Promise.resolve((_loadLocal().pesanan || []).map(_normalizeOrderRow)) },
     createPublicOrder(data){
       return new Promise(resolve=>{
         const s=_loadLocal()
@@ -94,17 +205,17 @@ const Api = (function(){
             harga:Number(menu.harga)||0,
             qty:Number(item.qty)||1,
             subtotal:(Number(menu.harga)||0)*(Number(item.qty)||1),
-            keterangan:item.keterangan || '',
+            keterangan:_encodeOrderNotes(item.keterangan || item.catatan_produk || '', item.catatan_umum || data.catatan_umum || data.keterangan || ''),
             status:'baru',
             tgl_pesanan:new Date().toISOString()
           })
         })
         _saveLocal(s)
-        resolve({kode_pesanan:kode,pesanan:s.pesanan.filter(p=>p.kode_pesanan===kode)})
+        resolve({kode_pesanan:kode,pesanan:s.pesanan.filter(p=>p.kode_pesanan===kode).map(_normalizeOrderRow)})
       })
     },
     trackPesanan(kode){
-      const list=(_loadLocal().pesanan || []).filter(p=>p.kode_pesanan===kode)
+      const list=(_loadLocal().pesanan || []).filter(p=>p.kode_pesanan===kode).map(_normalizeOrderRow)
       return list.length ? Promise.resolve({kode_pesanan:kode,pesanan:list}) : Promise.reject(new Error('not found'))
     },
     updatePesananStatus(id,status){
@@ -124,7 +235,7 @@ const Api = (function(){
       return new Promise(resolve=>{
         const s=_loadLocal()
         const kode=_kode('TRX')
-        const tx={id:_genId(s.transactions),kode_transaksi:kode,nama_pelanggan:data.nama_pelanggan || 'Pelanggan Umum',items:[],total:0,laba:0,date:new Date().toISOString()}
+        const tx={id:_genId(s.transactions),kode_transaksi:kode,nama_pelanggan:data.nama_pelanggan || 'Pelanggan Umum',metode_pembayaran:_normalizePaymentMethod(data.metode_pembayaran),items:[],total:0,laba:0,date:new Date().toISOString()}
         data.items.forEach(i=>{
           const p=s.products.find(x=>(x.id || x.id_menu)===(i.id || i.id_menu))
           if(!p) return
@@ -178,7 +289,11 @@ const Api = (function(){
 
   async function _json(res){
     const data = await res.json().catch(()=>({}))
-    if(!res.ok) throw new Error(data.error || data.message || 'request failed')
+    if(!res.ok){
+      const err = new Error(data.error || data.message || 'request failed')
+      err.status = res.status
+      throw err
+    }
     return data
   }
 
@@ -188,7 +303,10 @@ const Api = (function(){
       const res = await _fetchWithTimeout(BACKEND_BASE + API_PREFIX + '/auth/login', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})})
       if(!res.ok) return {success:false}
       const data = await res.json()
-      if(data.token) localStorage.setItem(TOKEN_KEY, data.token)
+      if(data.token){
+        localStorage.setItem(TOKEN_KEY, data.token)
+        _setSessionExpiry(data.token)
+      }
       return {success:true, user:data.user}
     },
     async getMenu(){ return (await _json(await _authFetch(API_PREFIX + '/menu',{method:'GET'}))).map(_normalizeMenu) },
@@ -215,6 +333,11 @@ const Api = (function(){
   function _tryHttp(httpFn, localFn){
     return new Promise((resolve,reject)=>{
       httpFn().then(resolve).catch(err=>{
+        if(err && (err.status === 401 || err.status === 403)){
+          _handleUnauthorized()
+          reject(err)
+          return
+        }
         console.warn('HTTP API failed, falling back to local storage:', err)
         try{ localFn().then(resolve).catch(reject) }catch(e){ reject(e) }
       })
@@ -223,8 +346,18 @@ const Api = (function(){
 
   return {
     init(){ localApi.init(); httpApi.init() },
-    logout(){ localStorage.removeItem(TOKEN_KEY); localStorage.removeItem('currentUser') },
-    login(creds){ return _tryHttp(()=>httpApi.login(creds), ()=>localApi.login(creds)) },
+    logout(){ _clearSession() },
+    hasValidAdminSession(){ return _hasValidAdminSession() },
+    sessionExpiresAt(){ return _getSessionExpiry() },
+    login(creds){
+      return _tryHttp(()=>httpApi.login(creds), ()=>localApi.login(creds)).then(res=>{
+        if(res && res.success && !localStorage.getItem(TOKEN_KEY)){
+          localStorage.setItem(TOKEN_KEY, 'local-session')
+          _setSessionExpiry(null)
+        }
+        return res
+      })
+    },
     getMenu(){ return _tryHttp(()=>httpApi.getMenu(), ()=>localApi.getMenu()) },
     getPublicMenu(){ return _tryHttp(()=>httpApi.getPublicMenu(), ()=>localApi.getMenu()) },
     addMenu(data){ return _tryHttp(()=>httpApi.addMenu(data), ()=>localApi.addMenu(data)) },

@@ -12,6 +12,7 @@ function groupRows(rows) {
         id_transaksi: row.id_transaksi,
         kode_transaksi: key,
         nama_pelanggan: row.nama_pelanggan || 'Pelanggan Umum',
+        metode_pembayaran: 'Tunai',
         total: 0,
         laba: 0,
         date: row.tgl_transaksi,

@@ -1,225 +1,330 @@
-Vue.component('transaction-page',{
-  template:`
-    <div class="transaction-page">
-      <div class="transaction-page-header d-flex justify-space-between align-center mb-6 animate-right">
-        <div>
-          <div class="greeting-text">TRANSAKSI</div>
-          <div class="welcome-text">Kelola Transaksi</div>
+Vue.component('transaction-page', {
+  template: `
+    <div class="admin-page transaction-page">
+      <div class="transaction-summary-grid">
+        <div class="summary-card transaction-summary-card">
+            <div>
+              <div class="summary-label">Total Transaksi (Periode)</div>
+              <div class="summary-value">{{ filteredTransactions.length }}</div>
+              <div class="summary-note note-ok">Naik 12.3%</div>
+            </div>
+            <div class="summary-icon icon-blue"><v-icon>mdi-credit-card-outline</v-icon></div>
+        </div>
+        <div class="summary-card transaction-summary-card">
+            <div>
+              <div class="summary-label">Total Pendapatan</div>
+              <div class="summary-value">Rp {{ formatCurrency(totalRevenue) }}</div>
+              <div class="summary-note note-ok">Naik 18.5%</div>
+            </div>
+            <div class="summary-icon icon-green"><v-icon>mdi-cash-multiple</v-icon></div>
+        </div>
+        <div class="summary-card transaction-summary-card">
+            <div>
+              <div class="summary-label">Rata-rata / Transaksi</div>
+              <div class="summary-value">Rp {{ formatCurrency(avgTransaction) }}</div>
+              <div class="summary-note note-ok">Naik 4.1%</div>
+            </div>
+            <div class="summary-icon icon-red"><v-icon>mdi-chart-bar</v-icon></div>
         </div>
       </div>
 
-      <div class="transaction-workspace animate-up delay-1">
-        <section class="transaction-cashier-panel">
-          <div class="transaction-section-header">
-            <div class="transaction-section-icon">
-              <v-icon color="#2563eb">mdi-cart-plus</v-icon>
-            </div>
-            <div>
-              <div class="transaction-section-title">Tambah Transaksi Kasir</div>
-              <div class="transaction-section-subtitle">Pilih pelanggan dan menu, lalu masukkan ke keranjang.</div>
-            </div>
-          </div>
-
-          <div class="transaction-form-grid">
-            <div class="transaction-field">
-              <label class="form-label">Nama Pelanggan</label>
-              <v-text-field v-model="namaPelanggan" outlined dense hide-details class="transaction-input mt-1" placeholder="Pelanggan Umum"></v-text-field>
-            </div>
-            <div class="transaction-field transaction-menu-field">
-              <label class="form-label">Pilih Menu</label>
-              <v-autocomplete :items="menus" item-text="nama" item-value="id_menu" v-model.number="selectedId" placeholder="Ketik nama menu..." outlined dense hide-details class="transaction-input mt-1" prepend-inner-icon="mdi-magnify">
-                <template v-slot:item="{item}">
-                  <v-list-item-content>
-                    <v-list-item-title class="font-weight-bold">{{ item.nama }}</v-list-item-title>
-                    <v-list-item-subtitle>Rp {{ formatCurrency(item.harga) }} | Stok: {{ item.stok }}</v-list-item-subtitle>
-                  </v-list-item-content>
-                </template>
-              </v-autocomplete>
-            </div>
-            <div class="transaction-field transaction-qty-field">
-              <label class="form-label">Qty</label>
-              <v-text-field v-model.number="qty" type="number" min="1" outlined dense hide-details class="transaction-input qty-field mt-1"></v-text-field>
-            </div>
-            <div class="transaction-field transaction-add-field">
-              <label class="form-label">&nbsp;</label>
-              <v-btn color="primary" depressed block class="transaction-add-btn mt-1" @click="addToCart">
-                <v-icon left small>mdi-plus</v-icon>Tambah
-              </v-btn>
+      <section class="ui-card filter-panel">
+        <div class="transaction-filter-grid">
+          <div class="period-filter-group">
+            <label class="form-label">Periode</label>
+            <div class="period-buttons">
+              <button type="button" :class="{active: period === 'today'}" @click="setPeriod('today')">Hari ini</button>
+              <button type="button" :class="{active: period === 'week'}" @click="setPeriod('week')">Minggu ini</button>
+              <button type="button" :class="{active: period === 'month'}" @click="setPeriod('month')">Bulan ini</button>
+              <button type="button" :class="{active: period === 'custom'}" @click="period = 'custom'">Custom</button>
             </div>
           </div>
 
-          <div class="transaction-cart-block">
-            <div class="transaction-cart-header">
-              <div>
-                <div class="transaction-cart-title">Keranjang Transaksi</div>
-                <div class="transaction-cart-subtitle">{{ cart.length ? cart.length + ' menu siap diproses' : 'Belum ada menu yang dipilih' }}</div>
-              </div>
-              <v-chip small outlined class="transaction-cart-chip">
-                {{ cart.reduce((s,i)=>s+i.qty,0) }} pcs
-              </v-chip>
-            </div>
-
-            <v-data-table :headers="cartHeaders" :items="cart" class="modern-table transaction-cart-table" hide-default-footer>
-              <template v-slot:item.harga="{item}">Rp {{ formatCurrency(item.harga) }}</template>
-              <template v-slot:item.subtotal="{item}">
-                <span class="transaction-cart-subtotal">Rp {{ formatCurrency(item.harga * item.qty) }}</span>
-              </template>
-              <template v-slot:item.qty="{item}">
-                <v-chip small color="#eff6ff" text-color="#2563eb" class="font-weight-bold">{{ item.qty }}</v-chip>
-              </template>
-              <template v-slot:item.aksi="{index}">
-                <v-btn icon small class="transaction-remove-btn" @click="removeFromCart(index)">
-                  <v-icon small>mdi-trash-can-outline</v-icon>
-                </v-btn>
-              </template>
-              <template v-slot:no-data>
-                <div class="transaction-empty-cart">
-                  <v-icon size="58" color="#dbe4f0">mdi-cart-outline</v-icon>
-                  <div>Belum ada menu di keranjang</div>
-                </div>
-              </template>
-            </v-data-table>
-          </div>
-        </section>
-
-        <aside class="transaction-payment-panel">
           <div>
-            <div class="transaction-payment-label">Total Pembayaran</div>
-            <div class="transaction-payment-total">
-              <span>Rp</span>
-              <strong>{{ formatCurrency(total) }}</strong>
-            </div>
+            <label class="form-label">Dari</label>
+            <v-text-field v-model="from" type="date" outlined dense hide-details class="mt-1 doc-filter-field doc-date-field" prepend-inner-icon="mdi-calendar-month"></v-text-field>
           </div>
-
-          <div class="transaction-payment-stats">
-            <div>
-              <span>Jumlah Item</span>
-              <strong>{{ cart.reduce((s,i)=>s+i.qty,0) }} pcs</strong>
-            </div>
-            <div>
-              <span>Total Menu</span>
-              <strong>{{ cart.length }} jenis</strong>
-            </div>
-          </div>
-
-          <div class="transaction-payment-customer">
-            <v-icon color="rgba(255,255,255,.9)">mdi-account-circle-outline</v-icon>
-            <div>
-              <span>Pelanggan</span>
-              <strong>{{ namaPelanggan || 'Pelanggan Umum' }}</strong>
-            </div>
-          </div>
-
-          <v-btn block depressed class="transaction-side-checkout" :disabled="!cart.length" @click="checkout">
-            <v-icon left small>mdi-cash-register</v-icon>
-            Selesaikan Transaksi
-          </v-btn>
-        </aside>
-      </div>
-
-      <v-card class="card-floating transaction-history-card mt-5 animate-up delay-4">
-        <div class="d-flex justify-space-between align-center mb-4">
           <div>
-            <div class="chart-header mb-1">RIWAYAT TRANSAKSI</div>
-            <div class="text-muted" style="font-size:12px;">Data transaksi yang sudah tercatat di MySQL</div>
+            <label class="form-label">Sampai</label>
+            <v-text-field v-model="to" type="date" outlined dense hide-details class="mt-1 doc-filter-field doc-date-field" prepend-inner-icon="mdi-calendar-month"></v-text-field>
           </div>
-          <v-btn text color="primary" class="font-weight-bold text-none" @click="loadAll"><v-icon left small>mdi-refresh</v-icon>Refresh</v-btn>
+          <div>
+            <label class="form-label">Metode</label>
+            <v-select v-model="method" :items="methodOptions" outlined dense hide-details class="mt-1 doc-filter-field doc-select-field" prepend-inner-icon="mdi-tune-variant"></v-select>
+          </div>
+          <div class="transaction-filter-actions">
+            <v-btn class="btn-primary" depressed @click="period = 'custom'">Terapkan</v-btn>
+            <v-btn class="soft-button" depressed @click="exportPdf">
+              <v-icon left small>mdi-file-pdf-box</v-icon>
+              Ekspor PDF
+            </v-btn>
+          </div>
         </div>
-        <v-data-table :headers="historyHeaders" :items="transactions" class="modern-table" :items-per-page="5">
-          <template v-slot:item.kode_transaksi="{item}">
-            <div class="font-weight-bold">{{ item.kode_transaksi || item.id }}</div>
-            <div class="text-muted" style="font-size:12px;">{{ formatDate(item.date || item.created_at) }}</div>
+      </section>
+
+      <section class="ui-card transaction-history-card animate-up">
+        <div class="panel-head compact">
+          <div>
+            <h2>Riwayat Transaksi</h2>
+            <p>{{ filteredTransactions.length }} transaksi pada periode terpilih</p>
+          </div>
+          <div class="table-search compact-search">
+            <v-icon small color="#c2372f">mdi-magnify</v-icon>
+            <input v-model="q" type="search" placeholder="Cari ID / pelanggan">
+          </div>
+        </div>
+
+        <v-data-table :headers="historyHeaders" :items="filteredTransactions" class="doc-data-table" :items-per-page="7">
+          <template v-slot:item.kode_transaksi="{ item }">
+            <strong>#{{ item.kode_transaksi || item.id }}</strong>
           </template>
-          <template v-slot:item.total="{item}">
-            <span class="font-weight-bold" style="color:#2563eb;">Rp {{ formatCurrency(item.total) }}</span>
+          <template v-slot:item.date="{ item }">{{ formatDate(item.date || item.created_at) }}</template>
+          <template v-slot:item.nama_pelanggan="{ item }">{{ item.nama_pelanggan || 'Pelanggan Umum' }}</template>
+          <template v-slot:item.metode="{ item }">
+            <span class="method-pill" :class="'method-' + methodSlug(methodForTx(item))">{{ methodForTx(item) }}</span>
           </template>
-          <template v-slot:item.aksi="{item}">
-            <v-btn small text color="primary" class="text-none font-weight-bold" @click="printReceipt(item)">
-              <v-icon left small>mdi-printer</v-icon>Cetak Struk
+          <template v-slot:item.total="{ item }"><strong>Rp {{ formatCurrency(item.total) }}</strong></template>
+          <template v-slot:item.kasir="{ item }">Admin01</template>
+          <template v-slot:item.aksi="{ item }">
+            <v-btn small outlined class="detail-button" @click="printReceipt(item)">
+              <v-icon left small>mdi-printer</v-icon>
+              Cetak
             </v-btn>
           </template>
         </v-data-table>
-      </v-card>
+      </section>
+
+      <section class="ui-card cashier-card animate-up delay-2">
+        <div class="panel-head compact">
+          <div>
+            <h2>Input Transaksi Kasir</h2>
+            <p>Catat transaksi langsung dan cetak struk pembayaran.</p>
+          </div>
+          <strong>Total: Rp {{ formatCurrency(total) }}</strong>
+        </div>
+
+        <div class="cashier-grid">
+          <div>
+            <label class="form-label">Nama Pelanggan</label>
+            <v-text-field v-model="namaPelanggan" outlined dense hide-details class="mt-1" placeholder="Pelanggan Umum"></v-text-field>
+          </div>
+          <div>
+            <label class="form-label">Pilih Menu</label>
+            <v-autocomplete
+              :items="menus"
+              item-text="nama"
+              item-value="id_menu"
+              v-model.number="selectedId"
+              placeholder="Ketik nama menu..."
+              outlined
+              dense
+              hide-details
+              class="mt-1"
+            ></v-autocomplete>
+          </div>
+          <div>
+            <label class="form-label">Qty</label>
+            <v-text-field v-model.number="qty" type="number" min="1" outlined dense hide-details class="mt-1"></v-text-field>
+          </div>
+          <div>
+            <label class="form-label">Pembayaran</label>
+            <v-select v-model="paymentMethod" :items="paymentOptions" outlined dense hide-details class="mt-1"></v-select>
+          </div>
+          <div class="cashier-add">
+            <v-btn class="soft-button" depressed block @click="addToCart">
+              <v-icon left small>mdi-plus</v-icon>
+              Tambah
+            </v-btn>
+          </div>
+        </div>
+
+        <div class="manual-cart mt-4">
+          <div v-if="!cart.length" class="empty-box">Belum ada menu di keranjang transaksi.</div>
+          <div v-for="(item, index) in cart" :key="index" class="manual-cart-row">
+            <div>
+              <strong>{{ item.nama }}</strong>
+              <small>{{ item.qty }} x Rp {{ formatCurrency(item.harga) }}</small>
+            </div>
+            <strong>Rp {{ formatCurrency(item.harga * item.qty) }}</strong>
+            <v-btn icon small @click="removeFromCart(index)"><v-icon small>mdi-close</v-icon></v-btn>
+          </div>
+        </div>
+
+        <div class="cashier-footer">
+          <v-btn class="btn-primary" depressed :disabled="!cart.length" @click="checkout">
+            <v-icon left small>mdi-cash-register</v-icon>
+            Selesaikan Transaksi
+          </v-btn>
+        </div>
+        <div class="cashier-feedback-wrap">
+          <inline-feedback :message="feedback.message" :type="feedback.type"></inline-feedback>
+        </div>
+      </section>
     </div>
   `,
-  data(){return{
-    menus:[],
-    transactions:[],
-    selectedId:null,
-    qty:1,
-    namaPelanggan:'',
-    cart:[],
-    cartHeaders:[
-      {text:'Menu',value:'nama'},
-      {text:'Harga',value:'harga'},
-      {text:'Qty',value:'qty'},
-      {text:'Subtotal',value:'subtotal'},
-      {text:'Aksi',value:'aksi',sortable:false}
-    ],
-    historyHeaders:[
-      {text:'Kode',value:'kode_transaksi'},
-      {text:'Pelanggan',value:'nama_pelanggan'},
-      {text:'Total',value:'total'},
-      {text:'Aksi',value:'aksi',sortable:false}
-    ]
-  }},
-  computed:{
-    total(){ return this.cart.reduce((t,i)=>t+(i.harga*i.qty),0) }
+  data() {
+    return {
+      menus: [],
+      transactions: [],
+      selectedId: null,
+      qty: 1,
+      namaPelanggan: '',
+      paymentMethod: 'Tunai',
+      cart: [],
+      period: 'week',
+      from: '',
+      to: '',
+      method: 'all',
+      q: '',
+      feedback: { message: '', type: 'info' },
+      methodOptions: [
+        { text: 'Semua', value: 'all' },
+        { text: 'Tunai', value: 'Tunai' }
+      ],
+      paymentOptions: ['Tunai'],
+      historyHeaders: [
+        { text: 'ID Pesanan', value: 'kode_transaksi' },
+        { text: 'Tgl Bayar', value: 'date' },
+        { text: 'Pelanggan', value: 'nama_pelanggan' },
+        { text: 'Metode', value: 'metode' },
+        { text: 'Total', value: 'total' },
+        { text: 'Kasir', value: 'kasir' },
+        { text: 'Aksi', value: 'aksi', sortable: false }
+      ]
+    }
   },
-  created(){ this.loadAll() },
-  methods:{
-    loadAll(){
-      Api.getMenu().then(r=>this.menus=r || [])
-      Api.getTransactions().then(r=>this.transactions=r || [])
+  computed: {
+    total() {
+      return this.cart.reduce((sum, item) => sum + (item.harga * item.qty), 0)
     },
-    addToCart(){
-      if(!this.selectedId){ notify('Pilih menu','error'); return }
-      const p=this.menus.find(x=>(x.id_menu || x.id)===this.selectedId)
-      if(!p){ notify('Menu tidak ditemukan','error'); return }
-      if(this.qty <= 0){ notify('Jumlah harus lebih dari 0','error'); return }
-      if(this.qty > p.stok){ notify('Stok tidak cukup','error'); return }
-      const existing=this.cart.find(x=>x.id_menu===p.id_menu)
-      if(existing){
-        if(existing.qty + this.qty > p.stok){ notify('Stok tidak cukup','error'); return }
+    filteredTransactions() {
+      return (this.transactions || []).filter(tx => {
+        const date = (tx.date || tx.created_at || '').slice(0, 10)
+        if (this.from && date && date < this.from) return false
+        if (this.to && date && date > this.to) return false
+        if (this.method !== 'all' && this.methodForTx(tx) !== this.method) return false
+        if (this.q) {
+          const text = [tx.kode_transaksi, tx.nama_pelanggan, tx.total].join(' ').toLowerCase()
+          if (!text.includes(this.q.toLowerCase())) return false
+        }
+        return true
+      })
+    },
+    totalRevenue() {
+      return this.filteredTransactions.reduce((sum, tx) => sum + Number(tx.total || 0), 0)
+    },
+    avgTransaction() {
+      return this.filteredTransactions.length ? Math.round(this.totalRevenue / this.filteredTransactions.length) : 0
+    }
+  },
+  created() {
+    this.setPeriod('week')
+    this.loadAll()
+  },
+  methods: {
+    showFeedback(message, type='info') {
+      this.feedback = { message, type }
+    },
+    loadAll() {
+      Api.getMenu().then(data => { this.menus = data || [] })
+      Api.getTransactions().then(data => { this.transactions = data || [] })
+    },
+    setPeriod(period) {
+      this.period = period
+      const now = new Date()
+      const to = now.toISOString().slice(0, 10)
+      let fromDate = new Date(now)
+      if (period === 'today') fromDate = now
+      if (period === 'week') fromDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7)
+      if (period === 'month') fromDate = new Date(now.getFullYear(), now.getMonth(), 1)
+      this.from = fromDate.toISOString().slice(0, 10)
+      this.to = to
+    },
+    addToCart() {
+      this.showFeedback('', 'info')
+      if (!this.selectedId) { this.showFeedback('Pilih menu', 'error'); return }
+      const menu = this.menus.find(item => Number(item.id_menu || item.id) === Number(this.selectedId))
+      if (!menu) { this.showFeedback('Menu tidak ditemukan', 'error'); return }
+      if (this.qty <= 0) { this.showFeedback('Jumlah harus lebih dari 0', 'error'); return }
+      if (this.qty > Number(menu.stok || 0)) { this.showFeedback('Stok tidak cukup', 'error'); return }
+
+      const existing = this.cart.find(item => Number(item.id_menu) === Number(menu.id_menu || menu.id))
+      if (existing) {
+        if (existing.qty + this.qty > Number(menu.stok || 0)) { this.showFeedback('Stok tidak cukup', 'error'); return }
         existing.qty += this.qty
-      }else{
-        this.cart.push({id:p.id_menu,id_menu:p.id_menu,nama:p.nama,nama_menu:p.nama_menu,harga:p.harga,qty:this.qty})
+      } else {
+        this.cart.push({
+          id: menu.id_menu || menu.id,
+          id_menu: menu.id_menu || menu.id,
+          nama: menu.nama || menu.nama_menu,
+          nama_menu: menu.nama_menu || menu.nama,
+          harga: Number(menu.harga || 0),
+          qty: Number(this.qty)
+        })
       }
-      notify('Menu ditambahkan','success')
-      this.selectedId=null
-      this.qty=1
+      this.selectedId = null
+      this.qty = 1
+      this.showFeedback('Menu ditambahkan ke keranjang.', 'success')
     },
-    removeFromCart(i){ this.cart.splice(i,1) },
-    checkout(){
-      if(!this.cart.length){ notify('Cart kosong','error'); return }
-      Api.checkout({items:this.cart,nama_pelanggan:this.namaPelanggan || 'Pelanggan Umum',total:this.total})
-        .then(tx=>{
-          notify('Transaksi berhasil','success')
-          this.printReceipt(tx)
-          this.cart=[]
-          this.namaPelanggan=''
-          this.loadAll()
-        }).catch(err=>notify(err.message || 'Transaksi gagal','error'))
+    removeFromCart(index) {
+      this.cart.splice(index, 1)
     },
-    printReceipt(tx){
-      const items=(tx.items || []).map(it=>`
-        <tr><td>${it.nama || it.nama_menu}</td><td>${it.qty}</td><td>Rp ${this.formatCurrency(it.harga)}</td><td>Rp ${this.formatCurrency(it.subtotal || it.harga*it.qty)}</td></tr>
+    checkout() {
+      this.showFeedback('', 'info')
+      if (!this.cart.length) { this.showFeedback('Cart kosong', 'error'); return }
+      Api.checkout({
+        items: this.cart,
+        nama_pelanggan: this.namaPelanggan || 'Pelanggan Umum',
+        total: this.total,
+        metode_pembayaran: 'Tunai'
+      }).then(tx => {
+        this.showFeedback('Transaksi berhasil', 'success')
+        tx.metode_pembayaran = 'Tunai'
+        this.printReceipt(tx)
+        this.cart = []
+        this.namaPelanggan = ''
+        this.paymentMethod = 'Tunai'
+        this.loadAll()
+      }).catch(err => this.showFeedback(err.message || 'Transaksi gagal', 'error'))
+    },
+    methodForTx(tx) {
+      return 'Tunai'
+    },
+    methodSlug(value) {
+      return String(value || '').toLowerCase()
+    },
+    exportPdf() {
+      window.print()
+    },
+    printReceipt(tx) {
+      const items = (tx.items || []).map(item => `
+        <tr><td>${item.nama || item.nama_menu}</td><td>${item.qty}</td><td>Rp ${this.formatCurrency(item.harga)}</td><td>Rp ${this.formatCurrency(item.subtotal || item.harga * item.qty)}</td></tr>
       `).join('')
-      const html=`
+      const html = `
         <html><head><title>Struk ${tx.kode_transaksi || ''}</title>
-        <style>body{font-family:Arial;padding:24px;}table{width:100%;border-collapse:collapse;}td,th{border-bottom:1px solid #ddd;padding:8px;text-align:left}.total{font-size:20px;font-weight:bold;text-align:right;margin-top:20px}</style>
+        <style>body{font-family:Arial;padding:24px;color:#1f2937;}table{width:100%;border-collapse:collapse;margin-top:16px;}td,th{border-bottom:1px solid #ddd;padding:8px;text-align:left}.total{font-size:20px;font-weight:bold;text-align:right;margin-top:20px}.brand{color:#c2372f;font-weight:800}</style>
         </head><body>
-          <h2>Warung Bakso Tulus</h2>
+          <h2 class="brand">Warung Bakso Tulus</h2>
           <div>Kode: ${tx.kode_transaksi || tx.id || '-'}</div>
           <div>Pelanggan: ${tx.nama_pelanggan || 'Pelanggan Umum'}</div>
+          <div>Metode: ${this.methodForTx(tx)}</div>
           <div>Tanggal: ${this.formatDate(tx.date || tx.created_at || new Date())}</div>
           <table><thead><tr><th>Menu</th><th>Qty</th><th>Harga</th><th>Subtotal</th></tr></thead><tbody>${items}</tbody></table>
           <div class="total">Total: Rp ${this.formatCurrency(tx.total)}</div>
         </body></html>`
-      const win=window.open('', '_blank')
-      if(win){ win.document.write(html); win.document.close(); win.focus(); win.print() }
+      const win = window.open('', '_blank')
+      if (win) {
+        win.document.write(html)
+        win.document.close()
+        win.focus()
+        win.print()
+      }
     },
-    formatCurrency(v){ return Number(v || 0).toLocaleString('id-ID') },
-    formatDate(v){ return v ? new Date(v).toLocaleString('id-ID') : '-' }
+    formatCurrency(value) {
+      return Number(value || 0).toLocaleString('id-ID')
+    },
+    formatDate(value) {
+      return value ? new Date(value).toLocaleString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '-'
+    }
   }
 })
