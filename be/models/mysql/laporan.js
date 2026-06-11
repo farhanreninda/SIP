@@ -6,7 +6,7 @@ async function getLaporan(filters = {}) {
   const params = []
 
   if (from && to) {
-    where.push('DATE(tgl_transaksi) BETWEEN ? AND ?')
+    where.push('tgl_transaksi >= ? AND tgl_transaksi < DATE_ADD(?, INTERVAL 1 DAY)')
     params.push(from, to)
   }
 
@@ -16,7 +16,17 @@ async function getLaporan(filters = {}) {
   }
 
   const [rows] = await pool.query(`
-    SELECT *
+    SELECT
+      id_transaksi,
+      kode_transaksi,
+      nama_pelanggan,
+      nama_menu,
+      qty,
+      harga,
+      modal,
+      subtotal,
+      laba,
+      tgl_transaksi
     FROM transaksi
     ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
     ORDER BY tgl_transaksi DESC, id_transaksi DESC

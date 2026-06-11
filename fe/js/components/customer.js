@@ -89,7 +89,7 @@ Vue.component('customer-menu-page', {
   template: `
     <div class="customer-stage">
       <div class="mobile-app-screen">
-        <transition name="customer-view" mode="out-in">
+        <transition name="customer-view">
         <div v-if="view === 'menu'" key="menu" class="mobile-menu-view">
             <div class="mobile-top mobile-menu-head">
               <div class="mobile-greeting-block">
@@ -139,10 +139,23 @@ Vue.component('customer-menu-page', {
                 <div class="mobile-menu-body">
                   <h3>{{ menu.nama }}</h3>
                   <p>{{ menu.deskripsi || 'Menu favorit Warung Bakso Tulus.' }}</p>
-                  <strong>Rp {{ formatCurrency(menu.harga) }}</strong>
-                  <button type="button" :class="{'is-added': isMenuAdded(menu)}" :disabled="menu.stok <= 0" @click="add(menu)">
-                    <v-icon small>{{ menu.stok > 0 ? (isMenuAdded(menu) ? 'mdi-check' : 'mdi-plus') : 'mdi-lock-outline' }}</v-icon>
-                  </button>
+                  <div class="mobile-menu-footer">
+                    <strong>Rp {{ formatCurrency(menu.harga) }}</strong>
+                    
+                    <div v-if="cartQty(menu) > 0" class="menu-action-stepper">
+                      <button type="button" class="btn-minus" @click="decrementMenu(menu)">
+                        <v-icon>mdi-minus-circle-outline</v-icon>
+                      </button>
+                      <span>{{ cartQty(menu) }}</span>
+                      <button type="button" class="btn-plus" :disabled="menu.stok <= cartQty(menu)" @click="add(menu)">
+                        <v-icon>mdi-plus-circle-outline</v-icon>
+                      </button>
+                    </div>
+                    
+                    <button v-else type="button" class="menu-action-add" :class="{'is-added': isMenuAdded(menu)}" :disabled="menu.stok <= 0" @click="add(menu)">
+                      <v-icon small>{{ menu.stok > 0 ? (isMenuAdded(menu) ? 'mdi-check' : 'mdi-plus') : 'mdi-lock-outline' }}</v-icon>
+                    </button>
+                  </div>
                 </div>
               </article>
             </div>
@@ -256,12 +269,42 @@ Vue.component('customer-menu-page', {
       })
     },
     categoryTabs() {
-      return [
-        { text: 'Semua', value: '', icon: 'mdi-silverware-fork-knife' },
-        { text: 'Bakso', value: 'Bakso', icon: 'mdi-bowl-mix' },
-        { text: 'Mie', value: 'Mie', icon: 'mdi-noodles' },
-        { text: 'Minuman', value: 'Minuman', icon: 'mdi-cup' }
+      const tabs = [
+        { text: 'Semua', value: '', icon: 'mdi-silverware-fork-knife' }
       ]
+      
+      if (!this.menus || this.menus.length === 0) {
+        return [
+          ...tabs,
+          { text: 'Bakso', value: 'Bakso', icon: 'mdi-bowl-mix' },
+          { text: 'Mie', value: 'Mie', icon: 'mdi-noodles' },
+          { text: 'Minuman', value: 'Minuman', icon: 'mdi-cup' }
+        ]
+      }
+
+      const uniqueCategories = [...new Set(this.menus.map(m => m.kategori).filter(Boolean))]
+      
+      const icons = {
+        'Bakso': 'mdi-bowl-mix',
+        'Mie': 'mdi-noodles',
+        'Minuman': 'mdi-cup',
+        'Dimsum': 'mdi-food-variant',
+        'Snack': 'mdi-french-fries',
+        'Dessert': 'mdi-ice-cream',
+        'Gorengan': 'mdi-peanut'
+      }
+
+      uniqueCategories.forEach(cat => {
+        // Find matching icon case-insensitively
+        const iconKey = Object.keys(icons).find(k => k.toLowerCase() === cat.toLowerCase())
+        tabs.push({
+          text: cat,
+          value: cat,
+          icon: iconKey ? icons[iconKey] : 'mdi-tag-outline'
+        })
+      })
+
+      return tabs
     }
   },
   created() {
@@ -298,6 +341,21 @@ Vue.component('customer-menu-page', {
     },
     isMenuAdded(menu) {
       return this.addedMenuId === this.menuKey(menu)
+    },
+    cartQty(menu) {
+      const item = this.cart.find(i => Number(i.id_menu) === Number(menu.id_menu))
+      return item ? item.qty : 0
+    },
+    decrementMenu(menu) {
+      const index = this.cart.findIndex(i => Number(i.id_menu) === Number(menu.id_menu))
+      if (index >= 0) {
+        if (this.cart[index].qty <= 1) {
+          this.cart.splice(index, 1)
+        } else {
+          this.cart[index].qty--
+        }
+        this.saveCartState()
+      }
     },
     playAddAnimation(menu) {
       clearTimeout(this.addAnimationTimer)
@@ -505,7 +563,7 @@ Vue.component('customer-tracking-page', {
           </div>
         </template>
 
-        <mobile-bottom-nav active="status" :count="0" @change="handleNav"></mobile-bottom-nav>
+        <mobile-bottom-nav active="status" :count="cartCount" @change="handleNav"></mobile-bottom-nav>
       </div>
     </div>
   `,
@@ -515,7 +573,8 @@ Vue.component('customer-tracking-page', {
       orderMap: {},
       loading: false,
       pollTimer: null,
-      feedback: { message: '', type: 'info' }
+      feedback: { message: '', type: 'info' },
+      cartCount: 0
     }
   },
   computed: {
@@ -583,6 +642,7 @@ Vue.component('customer-tracking-page', {
     }
   },
   mounted() {
+    this.restoreCartCount()
     this.prepareSelection()
     this.refreshOrders()
     this.pollTimer = setInterval(() => this.refreshOrders(true), 3000)
@@ -593,6 +653,17 @@ Vue.component('customer-tracking-page', {
   methods: {
     showFeedback(message, type='info') {
       this.feedback = { message, type }
+    },
+    restoreCartCount() {
+      const raw = localStorage.getItem('sip_customer_cart_state')
+      if (!raw) return
+      try {
+        const state = JSON.parse(raw)
+        const cart = Array.isArray(state.cart) ? state.cart : []
+        this.cartCount = cart.reduce((sum, item) => sum + (Number(item.qty) || 0), 0)
+      } catch (err) {
+        this.cartCount = 0
+      }
     },
     prepareSelection() {
       if (this.knownCodes.length === 1) this.selectedCode = this.knownCodes[0]

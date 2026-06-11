@@ -1,6 +1,15 @@
 const pool = require('../config/mysql')
-const { kode } = require('../utils/code')
 const MySqlTransaksi = require('../models/mysql/transaksi')
+
+function formatPelangganCode(id) {
+  return `PLG-${String(id).padStart(4, '0')}`
+}
+function formatPesananCode(id) {
+  return `PSN-${String(id).padStart(6, '0')}`
+}
+function formatTransaksiCode(id) {
+  return `TRX-${String(id).padStart(6, '0')}`
+}
 
 async function list(req, res) {
   try {
@@ -21,16 +30,18 @@ async function checkout(req, res) {
   try {
     await conn.beginTransaction()
 
-    const kodePelanggan = kode('PLG')
     const [pelanggan] = await conn.query(
-      'INSERT INTO pelanggan (nama_pelanggan,no_meja,kode_pelanggan) VALUES (?,?,?)',
-      [nama_pelanggan || 'Pelanggan Umum', no_meja || '', kodePelanggan]
+      'INSERT INTO pelanggan (nama_pelanggan,no_meja,kode_pelanggan) VALUES (?,?,NULL)',
+      [nama_pelanggan || 'Pelanggan Umum', no_meja || '']
     )
     const idPelanggan = pelanggan.insertId
-    const kodePesanan = kode('PSN')
-    const kodeTransaksi = kode('TRX')
+    const kodePelanggan = formatPelangganCode(idPelanggan)
+    await conn.query('UPDATE pelanggan SET kode_pelanggan=? WHERE id_pelanggan=?', [kodePelanggan, idPelanggan])
+    let kodePesanan = ''
+    let kodeTransaksi = ''
 
-    for (const item of items) {
+    for (let index = 0; index < items.length; index++) {
+      const item = items[index]
       const idMenu = item.id_menu || item.id
       const qty = Number(item.qty) || 0
 
@@ -44,8 +55,13 @@ async function checkout(req, res) {
 
       const [pesanan] = await conn.query(
         'INSERT INTO pesanan (kode_pesanan,id_pelanggan,id_menu,qty,keterangan,status,tgl_pesanan) VALUES (?,?,?,?,?,?,NOW())',
-        [kodePesanan, idPelanggan, idMenu, qty, item.keterangan || '', 'selesai']
+        [kodePesanan || 'PSN-TEMP', idPelanggan, idMenu, qty, item.keterangan || '', 'selesai']
       )
+      if (!kodePesanan) {
+        kodePesanan = formatPesananCode(pesanan.insertId)
+        await conn.query('UPDATE pesanan SET kode_pesanan=? WHERE id_pesanan=?', [kodePesanan, pesanan.insertId])
+        kodeTransaksi = kodePesanan.replace('PSN-', 'TRX-')
+      }
       await conn.query('UPDATE menu SET stok = stok - ? WHERE id_menu=?', [qty, idMenu])
 
       const harga = Number(menu.harga || 0)

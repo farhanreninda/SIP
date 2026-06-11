@@ -43,7 +43,19 @@ function groupRows(rows) {
 
 async function queryTransaksi(whereSql = '', params = []) {
   const [rows] = await pool.query(`
-    SELECT *
+    SELECT
+      id_transaksi,
+      kode_transaksi,
+      id_pesanan,
+      id_menu,
+      nama_menu,
+      nama_pelanggan,
+      qty,
+      harga,
+      modal,
+      subtotal,
+      laba,
+      tgl_transaksi
     FROM transaksi
     ${whereSql}
     ORDER BY tgl_transaksi DESC, id_transaksi DESC

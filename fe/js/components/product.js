@@ -24,7 +24,9 @@ Vue.component('menu-page', {
           Tambah Menu
         </v-btn>
       </div>
-      <inline-feedback :message="feedback.message" :type="feedback.type"></inline-feedback>
+      <div v-if="feedback.message" class="menu-feedback-wrap">
+        <inline-feedback :message="feedback.message" :type="feedback.type"></inline-feedback>
+      </div>
 
       <div class="menu-card-grid animate-up">
         <article v-for="menu in filteredMenus" :key="menu.id_menu || menu.id" class="doc-menu-card">
@@ -59,56 +61,118 @@ Vue.component('menu-page', {
 
       <div v-if="!filteredMenus.length" class="empty-box mt-4">Tidak ada menu untuk filter ini.</div>
 
-      <v-dialog v-model="dialog" max-width="680px" persistent>
-        <v-card class="doc-dialog">
-          <v-card-title>
-            <div>
-              <strong>{{ editId ? 'Edit Menu' : 'Tambah Menu Baru' }}</strong>
-              <small>Lengkapi data menu, harga, modal, stok, dan deskripsi.</small>
+      <v-dialog v-model="dialog" max-width="900px" persistent scrollable content-class="menu-form-dialog">
+        <v-card class="doc-dialog menu-dialog-polish">
+          <v-card-title class="menu-dialog-header">
+            <div class="menu-dialog-heading">
+              <div class="menu-dialog-icon">
+                <v-icon>mdi-silverware-fork-knife</v-icon>
+              </div>
+              <div>
+                <strong>{{ editId ? 'Edit Menu' : 'Tambah Menu Baru' }}</strong>
+                <small>Lengkapi detail menu agar siap tampil di katalog pelanggan.</small>
+              </div>
             </div>
             <v-spacer></v-spacer>
-            <v-btn icon @click="dialog=false"><v-icon>mdi-close</v-icon></v-btn>
+            <v-btn icon class="menu-dialog-close" @click="dialog=false"><v-icon>mdi-close</v-icon></v-btn>
           </v-card-title>
 
           <v-card-text>
-            <v-row dense>
-              <v-col cols="12" sm="7">
-                <label class="form-label">Nama Menu</label>
-                <v-text-field v-model="form.nama_menu" placeholder="Contoh: Bakso Urat Jumbo" outlined dense class="mt-1"></v-text-field>
-              </v-col>
-              <v-col cols="12" sm="5">
-                <label class="form-label">Kategori</label>
-                <v-select v-model="form.kategori" :items="categoryOptions" outlined dense class="mt-1"></v-select>
-              </v-col>
-              <v-col cols="12" sm="4">
-                <label class="form-label">Harga Jual</label>
-                <v-text-field v-model="displayHarga" outlined dense class="mt-1" prepend-inner-icon="mdi-cash"></v-text-field>
-              </v-col>
-              <v-col cols="12" sm="4">
-                <label class="form-label">Modal / HPP</label>
-                <v-text-field v-model="displayModal" outlined dense class="mt-1" prepend-inner-icon="mdi-chart-line"></v-text-field>
-              </v-col>
-              <v-col cols="12" sm="4">
-                <label class="form-label">Stok</label>
-                <v-text-field v-model.number="form.stok" type="number" outlined dense class="mt-1" prepend-inner-icon="mdi-package-variant"></v-text-field>
-              </v-col>
-              <v-col cols="12">
-                <label class="form-label">URL Gambar</label>
-                <v-text-field v-model="form.gambar" placeholder="Opsional" outlined dense class="mt-1" prepend-inner-icon="mdi-image"></v-text-field>
-              </v-col>
-              <v-col cols="12">
-                <label class="form-label">Deskripsi</label>
-                <v-textarea v-model="form.deskripsi" outlined dense rows="3" class="mt-1"></v-textarea>
-              </v-col>
-            </v-row>
+            <div class="menu-form-panel">
+              <div class="menu-form-grid">
+                <div class="menu-form-main">
+                  <section class="menu-form-section">
+                    <div class="menu-form-section-head">
+                      <span>Informasi Menu</span>
+                      <small>Nama, kategori, harga, modal, dan stok.</small>
+                    </div>
+                    <v-row dense>
+                      <v-col cols="12" sm="7">
+                        <label class="form-label">Nama Menu</label>
+                        <v-text-field v-model="form.nama_menu" placeholder="Contoh: Bakso Urat Jumbo" outlined dense class="mt-1"></v-text-field>
+                      </v-col>
+                      <v-col cols="12" sm="5">
+                        <label class="form-label">Kategori</label>
+                        <v-select v-model="form.kategori" :items="categoryOptions" outlined dense class="mt-1"></v-select>
+                      </v-col>
+                      <v-col cols="12" sm="4">
+                        <label class="form-label">Harga Jual</label>
+                        <v-text-field v-model="displayHarga" outlined dense class="mt-1" prepend-inner-icon="mdi-cash"></v-text-field>
+                      </v-col>
+                      <v-col cols="12" sm="4">
+                        <label class="form-label">Modal / HPP</label>
+                        <v-text-field v-model="displayModal" outlined dense class="mt-1" prepend-inner-icon="mdi-chart-line"></v-text-field>
+                      </v-col>
+                      <v-col cols="12" sm="4">
+                        <label class="form-label">Stok</label>
+                        <v-text-field v-model.number="form.stok" type="number" outlined dense class="mt-1" prepend-inner-icon="mdi-package-variant"></v-text-field>
+                      </v-col>
+                    </v-row>
+                  </section>
+
+                  <section class="menu-form-section">
+                    <div class="menu-form-section-head">
+                      <span>Deskripsi</span>
+                      <small>Tulis ringkas agar mudah dibaca pelanggan.</small>
+                    </div>
+                    <label class="form-label">Deskripsi Menu</label>
+                    <v-textarea v-model="form.deskripsi" outlined dense rows="3" auto-grow class="mt-1"></v-textarea>
+                  </section>
+                </div>
+
+                <aside class="menu-image-panel">
+                  <div class="menu-form-section-head">
+                    <span>Gambar Menu</span>
+                    <small>Pakai gambar publik atau upload file.</small>
+                  </div>
+                  <v-btn-toggle v-model="imageInputMode" dense mandatory class="image-source-toggle">
+                    <v-btn small value="url"><v-icon left x-small>mdi-link-variant</v-icon>URL</v-btn>
+                    <v-btn small value="upload"><v-icon left x-small>mdi-upload</v-icon>Upload</v-btn>
+                  </v-btn-toggle>
+
+                  <div v-if="imageInputMode === 'url'" class="menu-image-field">
+                    <label class="form-label">URL Gambar</label>
+                    <v-text-field v-model="form.gambar" placeholder="https://..." outlined dense class="image-url-field image-field-input" prepend-inner-icon="mdi-image"></v-text-field>
+                  </div>
+                  <div v-else class="menu-image-field">
+                    <label class="form-label">Upload Gambar</label>
+                    <v-file-input
+                      accept="image/*"
+                      outlined
+                      dense
+                      show-size
+                      prepend-icon=""
+                      prepend-inner-icon="mdi-image-plus"
+                      placeholder="Pilih file gambar"
+                      class="image-field-input menu-file-input"
+                      @change="onImageFileChange"
+                    ></v-file-input>
+                  </div>
+
+                  <div class="menu-preview-block">
+                    <label class="form-label">Preview</label>
+                    <div class="menu-image-preview">
+                      <img v-if="form.gambar" :src="form.gambar" alt="Preview gambar menu">
+                      <div v-else class="menu-image-preview-empty">
+                        <v-icon size="26">mdi-image-outline</v-icon>
+                        <span>Preview gambar akan muncul di sini</span>
+                      </div>
+                    </div>
+                  </div>
+                </aside>
+              </div>
+            </div>
           </v-card-text>
 
-          <v-card-actions>
+          <v-card-actions class="menu-dialog-actions">
             <v-spacer></v-spacer>
-            <v-btn text class="text-none font-weight-bold" @click="dialog=false">Batal</v-btn>
-            <v-btn class="btn-primary" depressed @click="save">{{ editId ? 'Simpan Perubahan' : 'Tambah Menu' }}</v-btn>
+            <v-btn outlined class="soft-button" @click="dialog=false">Batal</v-btn>
+            <v-btn class="btn-primary menu-submit-button" depressed @click="save">
+              <v-icon left small>{{ editId ? 'mdi-content-save-outline' : 'mdi-plus' }}</v-icon>
+              {{ editId ? 'Simpan Perubahan' : 'Tambah Menu' }}
+            </v-btn>
           </v-card-actions>
-          <div class="dialog-feedback-wrap">
+          <div v-if="dialogFeedback.message" class="dialog-feedback-wrap">
             <inline-feedback :message="dialogFeedback.message" :type="dialogFeedback.type"></inline-feedback>
           </div>
         </v-card>
@@ -124,6 +188,7 @@ Vue.component('menu-page', {
       activeCategory: '',
       feedback: { message: '', type: 'info' },
       dialogFeedback: { message: '', type: 'info' },
+      imageInputMode: 'url',
       form: { nama_menu: '', kategori: 'Bakso', harga: '', modal: '', stok: '', gambar: '', deskripsi: '' },
       categoryOptions: ['Bakso', 'Mie', 'Minuman', 'Lainnya']
     }
@@ -181,6 +246,7 @@ Vue.component('menu-page', {
       this.showFeedback('', 'info')
       this.showDialogFeedback('', 'info')
       this.editId = null
+      this.imageInputMode = 'url'
       this.form = { nama_menu: '', kategori: 'Bakso', harga: '', modal: '', stok: '', gambar: '', deskripsi: '' }
       this.dialog = true
     },
@@ -188,6 +254,7 @@ Vue.component('menu-page', {
       this.showFeedback('', 'info')
       this.showDialogFeedback('', 'info')
       this.editId = item.id_menu || item.id
+      this.imageInputMode = item.gambar && String(item.gambar).startsWith('data:image') ? 'upload' : 'url'
       this.form = {
         nama_menu: item.nama_menu || item.nama,
         kategori: item.kategori || 'Bakso',
@@ -199,6 +266,22 @@ Vue.component('menu-page', {
       }
       this.dialog = true
     },
+    onImageFileChange(file) {
+      if (!file) {
+        if (this.imageInputMode === 'upload') this.form.gambar = ''
+        return
+      }
+      if (!String(file.type || '').startsWith('image/')) {
+        this.showDialogFeedback('File harus berupa gambar', 'error')
+        return
+      }
+      const reader = new FileReader()
+      reader.onload = () => {
+        this.form.gambar = String(reader.result || '')
+      }
+      reader.onerror = () => this.showDialogFeedback('Gagal membaca file gambar', 'error')
+      reader.readAsDataURL(file)
+    },
     save() {
       this.showDialogFeedback('', 'info')
       if (!this.form.nama_menu) { this.showDialogFeedback('Isi nama menu', 'error'); return }
@@ -208,11 +291,49 @@ Vue.component('menu-page', {
         stok: Number(this.form.stok) || 0
       })
       const req = this.editId ? Api.updateMenu(this.editId, payload) : Api.addMenu(payload)
-      req.then(() => {
-        this.showFeedback(this.editId ? 'Menu diperbarui' : 'Menu ditambahkan', 'success')
+      req.then(savedMenu => {
+        const savedId = this.editId || (savedMenu && (savedMenu.id_menu || savedMenu.id)) || this.temporaryMenuId()
+        const row = this.normalizeMenuRow(Object.assign({}, payload, savedMenu || {}, {
+          id: savedId,
+          id_menu: savedId
+        }))
+        this.applyMenuRow(row)
+        this.activeCategory = ''
+        this.q = ''
         this.dialog = false
-        this.load()
-      }).catch(err => this.showDialogFeedback(err.message || 'Gagal menyimpan menu', 'error'))
+        this.showFeedback(this.editId ? 'Menu diperbarui' : 'Menu ditambahkan', 'success')
+      }).catch(err => this.showDialogFeedback(this.menuSaveError(err), 'error'))
+    },
+    normalizeMenuRow(menu) {
+      return {
+        id: menu.id || menu.id_menu,
+        id_menu: menu.id_menu || menu.id,
+        nama: menu.nama || menu.nama_menu,
+        nama_menu: menu.nama_menu || menu.nama,
+        kategori: menu.kategori || 'Bakso',
+        harga: Number(menu.harga) || 0,
+        modal: Number(menu.modal) || 0,
+        stok: Number(menu.stok) || 0,
+        gambar: menu.gambar || '',
+        deskripsi: menu.deskripsi || ''
+      }
+    },
+    applyMenuRow(menu) {
+      const id = menu.id_menu || menu.id
+      const list = this.menus || []
+      const idx = list.findIndex(item => String(item.id_menu || item.id) === String(id))
+      if (idx >= 0) this.$set(this.menus, idx, Object.assign({}, list[idx], menu))
+      else this.menus = [menu].concat(list)
+    },
+    temporaryMenuId() {
+      return 'tmp-' + Date.now()
+    },
+    menuSaveError(err) {
+      const message = String((err && err.message) || '')
+      if (!message || /failed to fetch|request failed|server/i.test(message)) {
+        return 'Gagal menyimpan ke database. Pastikan server backend aktif lalu coba lagi.'
+      }
+      return message
     },
     remove(id) {
       Confirm.show({ title: 'Hapus menu', message: 'Yakin ingin menghapus menu ini?' })

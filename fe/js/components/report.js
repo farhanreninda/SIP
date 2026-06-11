@@ -1,12 +1,23 @@
 Vue.component('report-page', {
   template: `
     <div class="admin-page report-page">
+      <div class="print-report-head">
+        <div>
+          <span>Warung Bakso Tulus</span>
+          <h1>Laporan Penjualan</h1>
+          <p>Periode {{ printPeriodText }}</p>
+        </div>
+        <div class="print-report-meta">
+          <small>Omzet Kotor</small>
+          <strong>{{ formatCompactCurrency(summary.omzet) }}</strong>
+        </div>
+      </div>
+
       <div class="report-period-bar">
         <button type="button" :class="{active: period === 'today'}" @click="setPeriod('today')">Hari ini</button>
         <button type="button" :class="{active: period === 'week'}" @click="setPeriod('week')">7 hari</button>
         <button type="button" :class="{active: period === 'month'}" @click="setPeriod('month')">30 hari</button>
         <button type="button" :class="{active: period === 'monthly'}" @click="setPeriod('monthly')">Bulanan</button>
-        <button type="button" :class="{active: period === 'custom'}" @click="period = 'custom'">Custom</button>
         <div class="period-date">
           <v-icon small color="#c2372f">mdi-calendar-month</v-icon>
           {{ formatDateShort(from) }} - {{ formatDateShort(to) }}
@@ -14,11 +25,7 @@ Vue.component('report-page', {
         <v-spacer></v-spacer>
         <v-btn class="soft-button" depressed @click="printReport">
           <v-icon left small>mdi-file-pdf-box</v-icon>
-          PDF
-        </v-btn>
-        <v-btn class="btn-primary" depressed @click="exportCsv">
-          <v-icon left small>mdi-file-excel</v-icon>
-          Excel
+          Ekspor PDF
         </v-btn>
       </div>
 
@@ -26,11 +33,63 @@ Vue.component('report-page', {
         <div class="report-filter-grid">
           <div>
             <label class="form-label">Dari Tanggal</label>
-            <v-text-field v-model="from" type="date" outlined dense hide-details class="mt-1 report-input doc-filter-field doc-date-field" prepend-inner-icon="mdi-calendar-month" @change="period='custom'"></v-text-field>
+            <v-menu
+              v-model="fromMenu"
+              :close-on-content-click="false"
+              transition="scale-transition"
+              offset-y
+              min-width="auto"
+            >
+              <template v-slot:activator="{ on, attrs }">
+                <v-text-field
+                  :value="formatDateInput(from)"
+                  outlined
+                  dense
+                  readonly
+                  hide-details
+                  class="mt-1 report-input doc-filter-field doc-date-field"
+                  prepend-inner-icon="mdi-calendar-month"
+                  v-bind="attrs"
+                  v-on="on"
+                ></v-text-field>
+              </template>
+              <v-date-picker
+                v-model="from"
+                color="#c2372f"
+                header-color="#c2372f"
+                @input="fromMenu = false; period = 'manual'"
+              ></v-date-picker>
+            </v-menu>
           </div>
           <div>
             <label class="form-label">Sampai Tanggal</label>
-            <v-text-field v-model="to" type="date" outlined dense hide-details class="mt-1 report-input doc-filter-field doc-date-field" prepend-inner-icon="mdi-calendar-month" @change="period='custom'"></v-text-field>
+            <v-menu
+              v-model="toMenu"
+              :close-on-content-click="false"
+              transition="scale-transition"
+              offset-y
+              min-width="auto"
+            >
+              <template v-slot:activator="{ on, attrs }">
+                <v-text-field
+                  :value="formatDateInput(to)"
+                  outlined
+                  dense
+                  readonly
+                  hide-details
+                  class="mt-1 report-input doc-filter-field doc-date-field"
+                  prepend-inner-icon="mdi-calendar-month"
+                  v-bind="attrs"
+                  v-on="on"
+                ></v-text-field>
+              </template>
+              <v-date-picker
+                v-model="to"
+                color="#c2372f"
+                header-color="#c2372f"
+                @input="toMenu = false; period = 'manual'"
+              ></v-date-picker>
+            </v-menu>
           </div>
           <div>
             <label class="form-label">Pencarian</label>
@@ -101,12 +160,52 @@ Vue.component('report-page', {
           </template>
         </v-data-table>
       </section>
+
+      <section class="print-sales-detail">
+        <div class="print-section-head">
+          <h2>Detail Penjualan</h2>
+          <p>{{ rows.length }} baris transaksi pada periode laporan.</p>
+        </div>
+        <table class="print-sales-table">
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Tanggal</th>
+              <th>Kode</th>
+              <th>Pelanggan</th>
+              <th>Menu</th>
+              <th>Qty</th>
+              <th>Harga</th>
+              <th>Subtotal</th>
+              <th>Laba/Rugi</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="!rows.length">
+              <td colspan="9" class="print-empty-row">Tidak ada data penjualan pada periode ini.</td>
+            </tr>
+            <tr v-for="(item, index) in rows" :key="(item.kode_transaksi || '-') + '-' + index">
+              <td>{{ index + 1 }}</td>
+              <td>{{ formatDate(item.tgl_transaksi) }}</td>
+              <td>{{ item.kode_transaksi || '-' }}</td>
+              <td>{{ item.nama_pelanggan || 'Pelanggan Umum' }}</td>
+              <td>{{ item.nama_menu || '-' }}</td>
+              <td>{{ item.qty }}</td>
+              <td>Rp {{ formatCurrency(item.harga) }}</td>
+              <td>Rp {{ formatCurrency(item.subtotal) }}</td>
+              <td>Rp {{ formatCurrency(item.laba) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
     </div>
   `,
   data() {
     return {
       from: '',
       to: '',
+      fromMenu: false,
+      toMenu: false,
       q: '',
       period: 'month',
       rows: [],
@@ -126,25 +225,11 @@ Vue.component('report-page', {
     }
   },
   computed: {
-    topMenu() {
-      const map = {}
-      this.rows.forEach(row => {
-        const name = row.nama_menu || 'Menu'
-        map[name] = (map[name] || 0) + Number(row.qty || 0)
-      })
-      const sorted = Object.keys(map).map(name => ({ name, qty: map[name] })).sort((a, b) => b.qty - a.qty)
-      return sorted[0] || { name: '-', qty: 0 }
-    },
-    avgDaily() {
-      const days = Math.max(1, this.dailySummary.length)
-      return Math.round(Number(this.summary.omzet || 0) / days)
-    },
     summaryCards() {
       return [
-        { label: 'Total Pendapatan', value: this.formatCompactCurrency(this.summary.omzet), note: 'Naik 12.4%', noteClass: 'note-ok', icon: 'mdi-cash-multiple', iconClass: 'icon-green' },
-        { label: 'Total Pesanan', value: this.summary.qty, note: 'Naik 8.1%', noteClass: 'note-ok', icon: 'mdi-clipboard-text-outline', iconClass: 'icon-red' },
-        { label: 'Rata-rata Harian', value: this.formatCompactCurrency(this.avgDaily), note: 'Naik 3.5%', noteClass: 'note-ok', icon: 'mdi-chart-bar', iconClass: 'icon-blue' },
-        { label: 'Menu Terlaris', value: this.topMenu.name, note: this.topMenu.qty + ' porsi', noteClass: 'note-dark', icon: 'mdi-star', iconClass: 'icon-yellow' }
+        { label: 'Omzet Kotor', value: this.formatCompactCurrency(this.summary.omzet), note: 'Total penjualan', noteClass: 'note-dark', icon: 'mdi-cash-multiple', iconClass: 'icon-green' },
+        { label: 'Laba Bersih', value: this.formatCompactCurrency(this.summary.laba), note: 'Setelah dikurangi modal', noteClass: 'note-ok', icon: 'mdi-hand-coin-outline', iconClass: 'icon-blue' },
+        { label: 'Total Modal', value: this.formatCompactCurrency(this.summary.modal), note: 'Modal bahan terjual', noteClass: 'note-dark', icon: 'mdi-swap-horizontal-bold', iconClass: 'icon-red' }
       ]
     },
     dailySummary() {
@@ -171,6 +256,11 @@ Vue.component('report-page', {
         percent: Math.max(8, Math.round((map[key].total / total) * 100)),
         color: colors[index % colors.length]
       })).sort((a, b) => b.total - a.total)
+    },
+    printPeriodText() {
+      const from = this.formatDateInput(this.from) || '-'
+      const to = this.formatDateInput(this.to) || '-'
+      return from === to ? from : from + ' - ' + to
     }
   },
   created() {
@@ -199,8 +289,9 @@ Vue.component('report-page', {
       this.showFeedback('', 'info')
       Api.getLaporan({ from: this.from, to: this.to, q: this.q })
         .then(data => {
-          this.rows = data.rows || []
-          this.summary = data.summary || { omzet: 0, modal: 0, laba: 0, qty: 0, transaksi: 0 }
+          const rows = this.normalizeReportRows(data.rows || [])
+          this.rows = rows
+          this.summary = this.buildSummary(rows)
           this.loading = false
           this.$nextTick(() => this.drawChart())
         })
@@ -208,6 +299,33 @@ Vue.component('report-page', {
           this.loading = false
           this.showFeedback(err.message || 'Gagal memuat laporan', 'error')
         })
+    },
+    normalizeReportRows(rows) {
+      return rows.map(row => {
+        const qty = Number(row.qty || 0)
+        const harga = Number(row.harga || 0)
+        const modal = Number(row.modal || 0)
+        const subtotal = Number(row.subtotal || harga * qty)
+        const laba = Number(row.laba || ((harga - modal) * qty))
+
+        return Object.assign({}, row, {
+          qty,
+          harga,
+          modal,
+          subtotal,
+          laba
+        })
+      })
+    },
+    buildSummary(rows) {
+      return rows.reduce((acc, row) => {
+        acc.omzet += Number(row.subtotal || 0)
+        acc.modal += Number(row.modal || 0) * Number(row.qty || 0)
+        acc.laba += Number(row.laba || 0)
+        acc.qty += Number(row.qty || 0)
+        acc.transaksi += 1
+        return acc
+      }, { omzet: 0, modal: 0, laba: 0, qty: 0, transaksi: 0 })
     },
     drawChart() {
       const canvas = document.getElementById('report-chart')
@@ -248,26 +366,6 @@ Vue.component('report-page', {
       if (text.includes('kerupuk')) return 'Lainnya'
       return 'Bakso'
     },
-    exportCsv() {
-      const header = ['Tanggal', 'Kode Transaksi', 'Pelanggan', 'Menu', 'Qty', 'Harga', 'Subtotal', 'Laba/Rugi']
-      const lines = this.rows.map(row => [
-        this.formatDate(row.tgl_transaksi),
-        row.kode_transaksi || '',
-        row.nama_pelanggan || '',
-        row.nama_menu || '',
-        row.qty,
-        row.harga,
-        row.subtotal,
-        row.laba
-      ].map(value => '"' + String(value).replace(/"/g, '""') + '"').join(','))
-      const csv = [header.join(','), ...lines].join('\n')
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-      const a = document.createElement('a')
-      a.href = URL.createObjectURL(blob)
-      a.download = 'laporan-penjualan.csv'
-      a.click()
-      URL.revokeObjectURL(a.href)
-    },
     printReport() {
       window.print()
     },
@@ -286,6 +384,10 @@ Vue.component('report-page', {
     formatDateShort(value) {
       if (!value) return '-'
       return new Date(value).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })
+    },
+    formatDateInput(value) {
+      if (!value) return ''
+      return new Date(value).toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' })
     }
   }
 })

@@ -20,7 +20,7 @@
 <body>
   <div id="app">
     <v-app>
-      <transition name="customer-page" mode="out-in">
+      <transition name="customer-page">
       <customer-scan-page
         v-if="publicPage==='scan'"
         key="scan"
@@ -49,10 +49,7 @@
     </v-app>
   </div>
 
-  <script>
-    window.API_BASE_URL = 'http://localhost:3000'
-  </script>
-  <script src="./js/services/api.js?v=10"></script>
+  <script src="./js/services/api.js?v=20"></script>
   <script src="./js/notify.js?v=3"></script>
   <script src="./js/confirm.js"></script>
   <script src="./js/components/customer.js?v=38"></script>
@@ -126,7 +123,6 @@
           const sameTableSession = this.customer && String(this.customer.no_meja || '') === String(meja)
           if (sameTableSession) {
             if (this.publicPage === 'scan') this.setPublicPage('customer-menu')
-            if (this.publicPage === 'tracking' && !this.lastOrderCode && !(this.orderCodes || []).length) this.setPublicPage('customer-menu')
             this.saveCustomerSession()
             return
           }

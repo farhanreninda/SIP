@@ -1,6 +1,18 @@
 Vue.component('dashboard-page', {
   template: `
     <div class="admin-page dashboard-page">
+      <div class="print-report-head">
+        <div>
+          <span>Warung Bakso Tulus</span>
+          <h1>Laporan Dashboard</h1>
+          <p>Ringkasan operasional per {{ currentDateText }}</p>
+        </div>
+        <div class="print-report-meta">
+          <small>Dicetak</small>
+          <strong>{{ currentDateText }}</strong>
+        </div>
+      </div>
+
       <div class="dashboard-intro animate-right">
         <div>
           <h1>Halo, Admin Tulus <v-icon color="#c2372f">mdi-hand-wave-outline</v-icon></h1>
@@ -60,9 +72,17 @@ Vue.component('dashboard-page', {
           </div>
 
           <section class="ui-card top-menu-panel animate-up delay-3">
-            <div class="panel-head compact">
-              <h2>Menu Terlaris</h2>
-              <button type="button" @click="showAllProducts">Lihat semua</button>
+            <div class="panel-head compact top-menu-head">
+              <div class="top-menu-head-copy">
+                <div class="top-menu-title-row">
+                  <h2>Menu Terlaris Bulan Ini</h2>
+                  <button type="button" class="panel-link-button" @click="showAllProducts">
+                    <span>Lihat semua</span>
+                    <v-icon small>mdi-chevron-right</v-icon>
+                  </button>
+                </div>
+                <p>Berdasarkan transaksi bulan berjalan</p>
+              </div>
             </div>
             <div class="top-menu-list">
               <div v-for="(item, index) in topProducts" :key="item.nama" class="top-menu-item">
@@ -120,9 +140,11 @@ Vue.component('dashboard-page', {
   `,
   data() {
     return {
-      transactions: [],
       orders: [],
       menus: [],
+      reportTodaySummary: { omzet: 0, modal: 0, laba: 0, qty: 0, transaksi: 0 },
+      reportWeekRows: [],
+      reportTopRows: [],
       loading: true,
       lastFetched: null
     }
@@ -140,13 +162,13 @@ Vue.component('dashboard-page', {
       })
     },
     todayKey() {
-      return new Date().toISOString().slice(0, 10)
+      return this.toLocalDateKey(new Date())
     },
     todayOrders() {
       return this.groupOrders(this.orders).filter(order => (order.tgl_pesanan || '').slice(0, 10) === this.todayKey)
     },
     totalRevenue() {
-      return this.transactions.reduce((sum, tx) => sum + Number(tx.total || 0), 0)
+      return Number(this.reportTodaySummary.omzet || 0)
     },
     pendingCount() {
       return this.groupOrders(this.orders).filter(order => order.status === 'baru').length
@@ -168,7 +190,7 @@ Vue.component('dashboard-page', {
           iconClass: 'icon-red'
         },
         {
-          label: 'Total Transaksi',
+          label: 'Total Transaksi Hari Ini',
           value: 'Rp ' + this.formatCurrency(this.totalRevenue),
           note: 'Naik 8.2%',
           noteClass: 'note-ok',
@@ -195,13 +217,11 @@ Vue.component('dashboard-page', {
     },
     topProducts() {
       const map = {}
-      this.transactions.forEach(tx => {
-        ;(tx.items || []).forEach(item => {
-          const name = item.nama || item.nama_menu || 'Menu'
-          if (!map[name]) map[name] = { nama: name, kategori: item.kategori || '', qty: 0, omzet: 0 }
-          map[name].qty += Number(item.qty || 0)
-          map[name].omzet += Number(item.subtotal || (item.harga * item.qty) || 0)
-        })
+      this.reportTopRows.forEach(row => {
+        const name = row.nama_menu || 'Menu'
+        if (!map[name]) map[name] = { nama: name, kategori: this.menuCategoryByName(name), qty: 0, omzet: 0 }
+        map[name].qty += Number(row.qty || 0)
+        map[name].omzet += Number(row.subtotal || 0)
       })
 
       let products = Object.keys(map).map(key => map[key]).sort((a, b) => b.qty - a.qty)
@@ -222,14 +242,22 @@ Vue.component('dashboard-page', {
   methods: {
     load() {
       this.loading = true
+      const today = new Date()
+      const todayKey = this.toLocalDateKey(today)
+      const weekStart = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 6)
+      const monthStart = new Date(today.getFullYear(), today.getMonth(), 1)
       Promise.all([
-        Api.getTransactions(),
         Api.getPesanan({}),
-        Api.getMenu()
-      ]).then(([transactions, orders, menus]) => {
-        this.transactions = transactions || []
+        Api.getMenu(),
+        Api.getLaporan({ from: todayKey, to: todayKey }),
+        Api.getLaporan({ from: this.toLocalDateKey(weekStart), to: todayKey }),
+        Api.getLaporan({ from: this.toLocalDateKey(monthStart), to: todayKey })
+      ]).then(([orders, menus, reportToday, reportWeek, reportTop]) => {
         this.orders = orders || []
         this.menus = menus || []
+        this.reportTodaySummary = (reportToday && reportToday.summary) || { omzet: 0, modal: 0, laba: 0, qty: 0, transaksi: 0 }
+        this.reportWeekRows = (reportWeek && reportWeek.rows) || []
+        this.reportTopRows = (reportTop && reportTop.rows) || []
         this.lastFetched = new Date()
         this.loading = false
         this.$nextTick(() => this.drawChart())
@@ -285,9 +313,13 @@ Vue.component('dashboard-page', {
       const now = new Date()
       for (let i = 6; i >= 0; i--) {
         const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i)
-        const key = date.toISOString().slice(0, 10)
+        const key = this.toLocalDateKey(date)
         labels.push(date.toLocaleDateString('id-ID', { weekday: 'short' }))
-        data.push(this.transactions.filter(tx => (tx.date || tx.created_at || '').slice(0, 10) === key).reduce((sum, tx) => sum + Number(tx.total || 0), 0))
+        data.push(
+          this.reportWeekRows
+            .filter(row => (row.tgl_transaksi || '').slice(0, 10) === key)
+            .reduce((sum, row) => sum + Number(row.subtotal || 0), 0)
+        )
       }
 
       const gradient = ctx.createLinearGradient(0, 0, 0, 260)
@@ -337,6 +369,20 @@ Vue.component('dashboard-page', {
       if (text.includes('mie')) return 'mdi-noodles'
       if (text.includes('kerupuk')) return 'mdi-cookie-outline'
       return 'mdi-bowl-mix'
+    },
+    menuCategoryByName(name) {
+      const text = String(name || '').toLowerCase()
+      if (text.includes('teh') || text.includes('jeruk') || text.includes('minum')) return 'Minuman'
+      if (text.includes('mie')) return 'Mie'
+      if (text.includes('kerupuk')) return 'Lainnya'
+      return 'Bakso'
+    },
+    toLocalDateKey(date) {
+      const d = new Date(date)
+      const y = d.getFullYear()
+      const m = String(d.getMonth() + 1).padStart(2, '0')
+      const day = String(d.getDate()).padStart(2, '0')
+      return y + '-' + m + '-' + day
     },
     statusLabel(status) {
       const map = { baru: 'Menunggu', diproses: 'Dikonfirmasi', selesai: 'Selesai', dibatalkan: 'Batal', campuran: 'Campuran' }

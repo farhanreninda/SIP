@@ -4,8 +4,21 @@ const Api = (function(){
   const TOKEN_KEY = 'token'
   const SESSION_EXPIRES_KEY = 'sip_admin_session_expires_at'
   const SESSION_TTL_MS = 8 * 60 * 60 * 1000
-  const BACKEND_BASE = (window.API_BASE_URL) ? window.API_BASE_URL : 'http://localhost:3000'
-  const API_PREFIX = '/v1'
+  function _getBackendBase() {
+    if (window.API_BASE_URL) return window.API_BASE_URL
+    const host = window.location.hostname
+
+    if (host.includes('ngrok') || host.includes('loca.lt')) {
+      const parts = window.location.pathname.split('/sip-web/')
+      const rootUrl = window.location.origin + parts[0] + '/sip-web'
+      return rootUrl + '/api.php'
+    }
+
+    return window.location.protocol + '//' + host + ':3000'
+  }
+
+  const BACKEND_BASE = _getBackendBase()
+  const API_PREFIX = BACKEND_BASE.includes('api.php') ? '?path=/v1' : '/v1'
 
   function _loadLocal(){
     const raw = localStorage.getItem(LS_KEY)
@@ -326,7 +339,8 @@ const Api = (function(){
     async checkout(data){ return _json(await _authFetch(API_PREFIX + '/transaksi/checkout',{method:'POST',body:JSON.stringify(data)})) },
     async getReport(params){
       const qs = new URLSearchParams(params).toString()
-      return _json(await _authFetch(API_PREFIX + '/laporan' + (qs ? '?' + qs : ''), {method:'GET'}))
+      const separator = API_PREFIX.includes('?') ? '&' : '?'
+      return _json(await _authFetch(API_PREFIX + '/laporan' + (qs ? separator + qs : ''), {method:'GET'}))
     }
   }
 
@@ -341,6 +355,20 @@ const Api = (function(){
         console.warn('HTTP API failed, falling back to local storage:', err)
         try{ localFn().then(resolve).catch(reject) }catch(e){ reject(e) }
       })
+    })
+  }
+
+  function _isLocalSession(){
+    return localStorage.getItem(TOKEN_KEY) === 'local-session'
+  }
+
+  function _adminMutation(httpFn, localFn){
+    if(_isLocalSession()) return localFn()
+    return httpFn().catch(err=>{
+      if(err && (err.status === 401 || err.status === 403)){
+        _handleUnauthorized()
+      }
+      throw err
     })
   }
 
@@ -360,9 +388,9 @@ const Api = (function(){
     },
     getMenu(){ return _tryHttp(()=>httpApi.getMenu(), ()=>localApi.getMenu()) },
     getPublicMenu(){ return _tryHttp(()=>httpApi.getPublicMenu(), ()=>localApi.getMenu()) },
-    addMenu(data){ return _tryHttp(()=>httpApi.addMenu(data), ()=>localApi.addMenu(data)) },
-    updateMenu(id,data){ return _tryHttp(()=>httpApi.updateMenu(id,data), ()=>localApi.updateMenu(id,data)) },
-    deleteMenu(id){ return _tryHttp(()=>httpApi.deleteMenu(id), ()=>localApi.deleteMenu(id)) },
+    addMenu(data){ return _adminMutation(()=>httpApi.addMenu(data), ()=>localApi.addMenu(data)) },
+    updateMenu(id,data){ return _adminMutation(()=>httpApi.updateMenu(id,data), ()=>localApi.updateMenu(id,data)) },
+    deleteMenu(id){ return _adminMutation(()=>httpApi.deleteMenu(id), ()=>localApi.deleteMenu(id)) },
     getProducts(){ return this.getMenu() },
     addProduct(data){ return this.addMenu(data) },
     updateProduct(id,data){ return this.updateMenu(id,data) },

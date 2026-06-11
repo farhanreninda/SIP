@@ -1,6 +1,18 @@
 Vue.component('transaction-page', {
   template: `
     <div class="admin-page transaction-page">
+      <div class="print-report-head">
+        <div>
+          <span>Warung Bakso Tulus</span>
+          <h1>Laporan Transaksi</h1>
+          <p>Periode {{ printPeriodText }} · {{ printMethodText }}</p>
+        </div>
+        <div class="print-report-meta">
+          <small>Total Pendapatan</small>
+          <strong>Rp {{ formatCurrency(totalRevenue) }}</strong>
+        </div>
+      </div>
+
       <div class="transaction-summary-grid">
         <div class="summary-card transaction-summary-card">
             <div>
@@ -34,19 +46,71 @@ Vue.component('transaction-page', {
             <label class="form-label">Periode</label>
             <div class="period-buttons">
               <button type="button" :class="{active: period === 'today'}" @click="setPeriod('today')">Hari ini</button>
-              <button type="button" :class="{active: period === 'week'}" @click="setPeriod('week')">Minggu ini</button>
-              <button type="button" :class="{active: period === 'month'}" @click="setPeriod('month')">Bulan ini</button>
-              <button type="button" :class="{active: period === 'custom'}" @click="period = 'custom'">Custom</button>
+              <button type="button" :class="{active: period === 'week'}" @click="setPeriod('week')">7 hari</button>
+              <button type="button" :class="{active: period === 'month'}" @click="setPeriod('month')">30 hari</button>
+              <button type="button" :class="{active: period === 'monthly'}" @click="setPeriod('monthly')">Bulanan</button>
             </div>
           </div>
 
           <div>
             <label class="form-label">Dari</label>
-            <v-text-field v-model="from" type="date" outlined dense hide-details class="mt-1 doc-filter-field doc-date-field" prepend-inner-icon="mdi-calendar-month"></v-text-field>
+            <v-menu
+              v-model="fromMenu"
+              :close-on-content-click="false"
+              transition="scale-transition"
+              offset-y
+              min-width="auto"
+            >
+              <template v-slot:activator="{ on, attrs }">
+                <v-text-field
+                  :value="formatDateInput(from)"
+                  outlined
+                  dense
+                  readonly
+                  hide-details
+                  class="mt-1 doc-filter-field doc-date-field"
+                  prepend-inner-icon="mdi-calendar-month"
+                  v-bind="attrs"
+                  v-on="on"
+                ></v-text-field>
+              </template>
+              <v-date-picker
+                v-model="from"
+                color="#c2372f"
+                header-color="#c2372f"
+                @input="fromMenu = false; period = 'custom'"
+              ></v-date-picker>
+            </v-menu>
           </div>
           <div>
             <label class="form-label">Sampai</label>
-            <v-text-field v-model="to" type="date" outlined dense hide-details class="mt-1 doc-filter-field doc-date-field" prepend-inner-icon="mdi-calendar-month"></v-text-field>
+            <v-menu
+              v-model="toMenu"
+              :close-on-content-click="false"
+              transition="scale-transition"
+              offset-y
+              min-width="auto"
+            >
+              <template v-slot:activator="{ on, attrs }">
+                <v-text-field
+                  :value="formatDateInput(to)"
+                  outlined
+                  dense
+                  readonly
+                  hide-details
+                  class="mt-1 doc-filter-field doc-date-field"
+                  prepend-inner-icon="mdi-calendar-month"
+                  v-bind="attrs"
+                  v-on="on"
+                ></v-text-field>
+              </template>
+              <v-date-picker
+                v-model="to"
+                color="#c2372f"
+                header-color="#c2372f"
+                @input="toMenu = false; period = 'custom'"
+              ></v-date-picker>
+            </v-menu>
           </div>
           <div>
             <label class="form-label">Metode</label>
@@ -92,6 +156,55 @@ Vue.component('transaction-page', {
             </v-btn>
           </template>
         </v-data-table>
+      </section>
+
+      <section class="print-transaction-report">
+        <div class="print-transaction-summary">
+          <div>
+            <span>Total Transaksi</span>
+            <strong>{{ filteredTransactions.length }}</strong>
+          </div>
+          <div>
+            <span>Total Pendapatan</span>
+            <strong>Rp {{ formatCurrency(totalRevenue) }}</strong>
+          </div>
+          <div>
+            <span>Rata-rata / Transaksi</span>
+            <strong>Rp {{ formatCurrency(avgTransaction) }}</strong>
+          </div>
+          <div>
+            <span>Periode</span>
+            <strong>{{ printPeriodText }}</strong>
+          </div>
+        </div>
+
+        <table class="print-transaction-table">
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>ID Transaksi</th>
+              <th>Tgl Bayar</th>
+              <th>Pelanggan</th>
+              <th>Metode</th>
+              <th>Total</th>
+              <th>Kasir</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="!filteredTransactions.length">
+              <td colspan="7" class="print-empty-row">Tidak ada transaksi pada periode ini.</td>
+            </tr>
+            <tr v-for="(item, index) in filteredTransactions" :key="item.kode_transaksi || item.id || index">
+              <td>{{ index + 1 }}</td>
+              <td>{{ item.kode_transaksi || item.id || '-' }}</td>
+              <td>{{ formatDateLong(item.date || item.created_at) }}</td>
+              <td>{{ item.nama_pelanggan || 'Pelanggan Umum' }}</td>
+              <td>{{ methodForTx(item) }}</td>
+              <td>Rp {{ formatCurrency(item.total) }}</td>
+              <td>Admin01</td>
+            </tr>
+          </tbody>
+        </table>
       </section>
 
       <section class="ui-card cashier-card animate-up delay-2">
@@ -171,9 +284,11 @@ Vue.component('transaction-page', {
       namaPelanggan: '',
       paymentMethod: 'Tunai',
       cart: [],
-      period: 'week',
+      period: 'month',
       from: '',
       to: '',
+      fromMenu: false,
+      toMenu: false,
       method: 'all',
       q: '',
       feedback: { message: '', type: 'info' },
@@ -199,7 +314,7 @@ Vue.component('transaction-page', {
     },
     filteredTransactions() {
       return (this.transactions || []).filter(tx => {
-        const date = (tx.date || tx.created_at || '').slice(0, 10)
+        const date = this.toLocalDateKey(tx.date || tx.created_at)
         if (this.from && date && date < this.from) return false
         if (this.to && date && date > this.to) return false
         if (this.method !== 'all' && this.methodForTx(tx) !== this.method) return false
@@ -215,10 +330,18 @@ Vue.component('transaction-page', {
     },
     avgTransaction() {
       return this.filteredTransactions.length ? Math.round(this.totalRevenue / this.filteredTransactions.length) : 0
+    },
+    printPeriodText() {
+      const from = this.formatDateInput(this.from) || '-'
+      const to = this.formatDateInput(this.to) || '-'
+      return from === to ? from : from + ' - ' + to
+    },
+    printMethodText() {
+      return this.method === 'all' ? 'Semua metode' : this.method
     }
   },
   created() {
-    this.setPeriod('week')
+    this.setPeriod('month')
     this.loadAll()
   },
   methods: {
@@ -232,13 +355,23 @@ Vue.component('transaction-page', {
     setPeriod(period) {
       this.period = period
       const now = new Date()
-      const to = now.toISOString().slice(0, 10)
+      const to = this.toLocalDateKey(now)
       let fromDate = new Date(now)
       if (period === 'today') fromDate = now
-      if (period === 'week') fromDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7)
-      if (period === 'month') fromDate = new Date(now.getFullYear(), now.getMonth(), 1)
-      this.from = fromDate.toISOString().slice(0, 10)
+      if (period === 'week') fromDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6)
+      if (period === 'month') fromDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 29)
+      if (period === 'monthly') fromDate = new Date(now.getFullYear(), now.getMonth(), 1)
+      this.from = this.toLocalDateKey(fromDate)
       this.to = to
+    },
+    toLocalDateKey(value) {
+      if (!value) return ''
+      const d = new Date(value)
+      if (Number.isNaN(d.getTime())) return ''
+      const y = d.getFullYear()
+      const m = String(d.getMonth() + 1).padStart(2, '0')
+      const day = String(d.getDate()).padStart(2, '0')
+      return y + '-' + m + '-' + day
     },
     addToCart() {
       this.showFeedback('', 'info')
@@ -325,6 +458,13 @@ Vue.component('transaction-page', {
     },
     formatDate(value) {
       return value ? new Date(value).toLocaleString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '-'
+    },
+    formatDateLong(value) {
+      return value ? new Date(value).toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'
+    },
+    formatDateInput(value) {
+      if (!value) return ''
+      return new Date(value).toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' })
     }
   }
 })

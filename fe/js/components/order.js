@@ -423,19 +423,32 @@ Vue.component('order-page', {
       this.detailDialog = true
     },
     exportOrders() {
-      const header = ['ID Pesanan', 'Pelanggan', 'Meja', 'Tanggal', 'Total', 'Status']
-      const lines = this.filteredGroups.map(order => [
+      const delimiter = ';'
+      const header = ['No', 'ID Pesanan', 'Pelanggan', 'Meja', 'Tanggal', 'Total Harga (Rp)', 'Status']
+      const rows = this.filteredGroups.map((order, index) => [
+        index + 1,
         order.kode_pesanan,
         order.nama_pelanggan,
         order.no_meja,
         this.formatDate(order.tgl_pesanan),
         order.total,
         this.statusLabel(order.status)
-      ].map(value => '"' + String(value).replace(/"/g, '""') + '"').join(','))
-      this.downloadCsv('pesanan.csv', [header.join(','), ...lines].join('\n'))
+      ])
+      const csv = [
+        'sep=' + delimiter,
+        this.csvRow(header, delimiter),
+        ...rows.map(row => this.csvRow(row, delimiter))
+      ].join('\r\n')
+      this.downloadCsv('pesanan.csv', csv)
+    },
+    csvRow(values, delimiter) {
+      return values.map(value => {
+        const text = String(value == null ? '' : value).replace(/"/g, '""')
+        return '"' + text + '"'
+      }).join(delimiter)
     },
     downloadCsv(filename, csv) {
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+      const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' })
       const a = document.createElement('a')
       a.href = URL.createObjectURL(blob)
       a.download = filename

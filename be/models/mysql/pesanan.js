@@ -56,11 +56,16 @@ async function listPesanan(whereSql = '', params = []) {
 
 async function createPelanggan(conn, data) {
   const [result] = await conn.query(
-    'INSERT INTO pelanggan (nama_pelanggan,no_meja,kode_pelanggan) VALUES (?,?,?)',
-    [data.nama_pelanggan, data.no_meja || '', data.kode_pelanggan]
+    'INSERT INTO pelanggan (nama_pelanggan,no_meja,kode_pelanggan) VALUES (?,?,NULL)',
+    [data.nama_pelanggan, data.no_meja || '']
   )
-
-  return result.insertId
+  const idPelanggan = result.insertId
+  const kodePelanggan = `PLG-${String(idPelanggan).padStart(4, '0')}`
+  await conn.query(
+    'UPDATE pelanggan SET kode_pelanggan=? WHERE id_pelanggan=?',
+    [kodePelanggan, idPelanggan]
+  )
+  return idPelanggan
 }
 
 async function createPesanan(conn, data) {
@@ -89,6 +94,9 @@ async function insertTransaksiForPesanan(conn, idPesanan, userId) {
 
   const subtotal = Number(pesanan.harga) * Number(pesanan.qty)
   const laba = (Number(pesanan.harga) - Number(pesanan.modal || 0)) * Number(pesanan.qty)
+  const kodeTransaksi = String(pesanan.kode_pesanan || '').startsWith('PSN-')
+    ? String(pesanan.kode_pesanan).replace('PSN-', 'TRX-')
+    : `TRX-${String(pesanan.id_pesanan).padStart(6, '0')}`
 
   await conn.query(
     'UPDATE menu SET stok = stok - ? WHERE id_menu=? AND stok >= ?',
@@ -103,7 +111,7 @@ async function insertTransaksiForPesanan(conn, idPesanan, userId) {
       (kode_transaksi,id_user,id_pesanan,id_pelanggan,id_menu,nama_menu,nama_pelanggan,qty,harga,modal,subtotal,laba,tgl_transaksi)
     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,NOW())
   `, [
-    `TRX-${pesanan.kode_pesanan}`,
+    kodeTransaksi,
     userId || null,
     pesanan.id_pesanan,
     pesanan.id_pelanggan,

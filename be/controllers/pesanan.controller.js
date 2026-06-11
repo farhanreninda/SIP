@@ -1,6 +1,11 @@
 const pool = require('../config/mysql')
-const { kode } = require('../utils/code')
 const MySqlPesanan = require('../models/mysql/pesanan')
+function formatPelangganCode(id) {
+  return `PLG-${String(id).padStart(4, '0')}`
+}
+function formatPesananCode(id) {
+  return `PSN-${String(id).padStart(6, '0')}`
+}
 
 function encodeNotes(itemNote, generalNote) {
   const item = String(itemNote || '').trim()
@@ -45,16 +50,16 @@ async function createPublic(req, res) {
   try {
     await conn.beginTransaction()
 
-    const kodePelanggan = kode('PLG')
     const idPelanggan = await MySqlPesanan.createPelanggan(conn, {
       nama_pelanggan,
-      no_meja,
-      kode_pelanggan: kodePelanggan
+      no_meja
     })
-    const kodePesanan = kode('PSN')
+    const kodePelanggan = formatPelangganCode(idPelanggan)
     const inserted = []
+    let kodePesanan = ''
 
-    for (const item of items) {
+    for (let index = 0; index < items.length; index++) {
+      const item = items[index]
       const idMenu = item.id_menu || item.id
       const qty = Number(item.qty) || 0
 
@@ -64,13 +69,17 @@ async function createPublic(req, res) {
       if (!menuRows.length) throw new Error('menu tidak ditemukan')
 
       const idPesanan = await MySqlPesanan.createPesanan(conn, {
-        kode_pesanan: kodePesanan,
+        kode_pesanan: kodePesanan || 'PSN-TEMP',
         id_pelanggan: idPelanggan,
         id_menu: idMenu,
         qty,
         keterangan: encodeNotes(item.keterangan || item.catatan_produk || '', item.catatan_umum || catatanUmum),
         status: 'baru'
       })
+      if (!kodePesanan) {
+        kodePesanan = formatPesananCode(idPesanan)
+        await conn.query('UPDATE pesanan SET kode_pesanan=? WHERE id_pesanan=?', [kodePesanan, idPesanan])
+      }
       inserted.push(idPesanan)
     }
 
