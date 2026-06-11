@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SIP Admin</title>
+  <link rel="icon" href="./assets/img/favicon.svg" type="image/svg+xml">
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.x/css/materialdesignicons.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/vuetify@2.6.14/dist/vuetify.min.css" rel="stylesheet">
+
+  <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vuetify@2.6.14/dist/vuetify.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <link rel="stylesheet" href="./assets/css/style.css?v=87">
+</head>
+
+<body>
+  <div id="app">
+    <v-app>
+      <login-page
+        v-if="!isLogin"
+        :show-customer-link="false"
+        :initial-feedback="loginFeedback"
+        @login-success="onLogin"
+      ></login-page>
+
+      <div v-else class="app-layout admin-shell">
+        <div class="sidebar admin-sidebar animate-right">
+          <div class="logo-box admin-brand">
+            <div class="brand-mark">
+              <v-icon color="white" small>mdi-noodles</v-icon>
+            </div>
+            <div class="app-name-wrapper">
+              <div class="app-name">Bakso Tulus</div>
+              <div class="app-tagline">Panel Admin</div>
+            </div>
+          </div>
+
+          <div class="menu">
+            <div class="menu-header">MENU UTAMA</div>
+            <div class="menu-item animate-up delay-1" :class="{active:page==='dashboard'}" @click="setPage('dashboard')">
+              <v-icon left class="nav-icon nav-dashboard">mdi-view-dashboard</v-icon> Dashboard
+            </div>
+            <div class="menu-item animate-up delay-2" :class="{active:page==='order'}" @click="setPage('order')">
+              <v-icon left class="nav-icon nav-order">mdi-clipboard-list</v-icon> Kelola Pesanan
+            </div>
+            <div class="menu-item animate-up delay-3" :class="{active:page==='transaction'}" @click="setPage('transaction')">
+              <v-icon left class="nav-icon nav-transaction">mdi-cash-register</v-icon> Kelola Transaksi
+            </div>
+            <div class="menu-item animate-up delay-3" :class="{active:page==='menu'}" @click="setPage('menu')">
+              <v-icon left class="nav-icon nav-menu">mdi-silverware-fork-knife</v-icon> Kelola Menu
+            </div>
+            <div class="menu-item animate-up delay-4" :class="{active:page==='report'}" @click="setPage('report')">
+              <v-icon left class="nav-icon nav-report">mdi-file-chart</v-icon> Laporan
+            </div>
+
+            <div class="menu-header">LAINNYA</div>
+            <div class="menu-item animate-up delay-4" @click.stop.prevent="logout">
+              <v-icon left class="nav-icon nav-logout">mdi-logout</v-icon> Logout
+            </div>
+          </div>
+
+          <div class="sidebar-profile">
+            <v-avatar size="42" color="#ea580c">
+              <span class="white--text font-weight-bold">AD</span>
+            </v-avatar>
+            <div>
+              <div class="sidebar-profile-name">{{ user ? user.username : 'Admin Tulus' }}</div>
+              <div class="sidebar-profile-email">admin01@warung</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="main-content">
+          <div class="page-content-wrapper">
+            <div class="topbar admin-topbar animate-up">
+              <div class="breadcrumb-area">
+                <div class="breadcrumb-item">Admin / {{ breadcrumbTitle }}</div>
+                <div class="admin-page-title">{{ breadcrumbTitle }}</div>
+              </div>
+
+              <v-spacer></v-spacer>
+
+              <div class="topbar-meta">
+                <div class="topbar-chip">
+                  <v-icon small color="#c2372f">mdi-calendar-month</v-icon>
+                  <span>{{ currentDay }}</span>
+                </div>
+                <div class="topbar-chip">
+                  <v-icon small color="#1f2937">mdi-clock-outline</v-icon>
+                  <span>{{ currentTime }}</span>
+                </div>
+                <div class="topbar-chip">
+                  <span class="status-dot"></span>
+                  <span>{{ user ? user.username : 'admin' }}</span>
+                </div>
+              </div>
+            </div>
+
+            <transition name="fade" mode="out-in">
+              <dashboard-page v-if="page==='dashboard'" key="dashboard"></dashboard-page>
+              <order-page v-if="page==='order'" key="order"></order-page>
+              <transaction-page v-if="page==='transaction'" key="transaction"></transaction-page>
+              <menu-page v-if="page==='menu'" key="menu"></menu-page>
+              <report-page v-if="page==='report'" key="report"></report-page>
+            </transition>
+          </div>
+        </div>
+      </div>
+    </v-app>
+  </div>
+
+  <!-- API Base URL logic is now handled dynamically in api.js -->
+  <script src="./js/services/api.js?v=22"></script>
+  <script src="./js/notify.js?v=3"></script>
+  <script src="./js/confirm.js"></script>
+  <script src="./js/components/login.js?v=10"></script>
+  <script src="./js/components/product.js?v=27"></script>
+  <script src="./js/components/order.js?v=14"></script>
+  <script src="./js/components/transaction.js?v=19"></script>
+  <script src="./js/components/dashboard.js?v=14"></script>
+  <script src="./js/components/report.js?v=16"></script>
+
+  <script>
+    const ADMIN_PAGE_KEY = 'sip_admin_active_page'
+    const ADMIN_PAGES = ['dashboard', 'order', 'transaction', 'menu', 'report']
+
+    new Vue({
+      el: '#app',
+      vuetify: new Vuetify({}),
+      data: {
+        isLogin: false,
+        page: 'dashboard',
+        user: null,
+        currentDay: '',
+        currentTime: '',
+        loginFeedback: { message: '', type: 'info' }
+      },
+      created() {
+        this.updateDate()
+        this.dateTimer = setInterval(this.updateDate, 60000)
+        this.authExpiredHandler = () => {
+          this.logout()
+          this.loginFeedback = { message: 'Sesi login habis. Silakan login ulang.', type: 'warning' }
+        }
+        window.addEventListener('sip:auth-expired', this.authExpiredHandler)
+        const u = localStorage.getItem('currentUser')
+        if (u && window.Api && Api.hasValidAdminSession && Api.hasValidAdminSession()) {
+          try {
+            this.user = JSON.parse(u)
+            this.isLogin = true
+            this.page = this.getSavedPage()
+          } catch (e) {
+            this.logout()
+          }
+        } else if (u) {
+          this.logout()
+        }
+      },
+      beforeDestroy() {
+        if (this.dateTimer) clearInterval(this.dateTimer)
+        if (this.authExpiredHandler) window.removeEventListener('sip:auth-expired', this.authExpiredHandler)
+      },
+      computed: {
+        breadcrumbTitle() {
+          const map = {
+            dashboard: 'Dashboard',
+            order: 'Kelola Pesanan',
+            transaction: 'Kelola Transaksi',
+            menu: 'Kelola Menu',
+            report: 'Laporan Penjualan'
+          }
+          return map[this.page] || this.page
+        }
+      },
+      methods: {
+        onLogin(user) {
+          this.user = user
+          this.isLogin = true
+          this.loginFeedback = { message: '', type: 'info' }
+          this.page = this.getSavedPage()
+        },
+        getSavedPage() {
+          const savedPage = localStorage.getItem(ADMIN_PAGE_KEY)
+          return ADMIN_PAGES.includes(savedPage) ? savedPage : 'dashboard'
+        },
+        setPage(page) {
+          if (!ADMIN_PAGES.includes(page)) return
+          this.page = page
+          localStorage.setItem(ADMIN_PAGE_KEY, page)
+        },
+        logout() {
+          if (window.Api && Api.logout) Api.logout()
+          else {
+            localStorage.removeItem('token')
+            localStorage.removeItem('currentUser')
+          }
+          localStorage.removeItem(ADMIN_PAGE_KEY)
+          this.user = null
+          this.isLogin = false
+          this.page = 'dashboard'
+        },
+        updateDate() {
+          const now = new Date()
+          const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }
+          this.currentDay = now.toLocaleDateString('id-ID', options)
+          this.currentTime = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+        }
+      }
+    })
+  </script>
+</body>
+
+</html>
