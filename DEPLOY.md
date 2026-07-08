@@ -80,3 +80,39 @@ window.API_BASE_URL = 'http://localhost:3000'
 Endpoint utama menggunakan prefix `/v1`, misalnya `POST /v1/auth/login` dan `GET /v1/menu`.
 
 Jika BE dipindah ke domain/port lain, ubah nilai `window.API_BASE_URL` di file HTML FE.
+
+## 6. GitHub Pages
+
+Repo ini sudah punya workflow untuk deploy isi folder `fe` ke GitHub Pages.
+
+Di GitHub buka:
+
+```text
+Settings -> Pages
+```
+
+Lalu set:
+
+```text
+Source: GitHub Actions
+```
+
+Setelah push ke branch `main`, GitHub Actions akan publish folder `fe`.
+
+URL project page bawaan:
+
+```text
+https://farhanreninda.github.io/SIP/
+https://farhanreninda.github.io/SIP/pelanggan/
+https://farhanreninda.github.io/SIP/admin/
+```
+
+Jika domain utama `farhanreninda.my.id` dipasang ke user site GitHub Pages dan aplikasi ini ditempatkan di folder `sip`, URL yang dituju menjadi:
+
+```text
+https://farhanreninda.my.id/sip/
+https://farhanreninda.my.id/sip/pelanggan/
+https://farhanreninda.my.id/sip/admin/
+```
+
+Catatan: jika custom domain dipasang langsung ke repo `SIP`, halaman biasanya tampil dari root domain, sehingga URL-nya menjadi `https://farhanreninda.my.id/pelanggan/`, bukan `https://farhanreninda.my.id/sip/pelanggan/`.
