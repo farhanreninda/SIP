@@ -1,0 +1,19 @@
+{
+  "name": "sip-web",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sistem Informasi Penjualan Warung Bakso Tulus",
+  "scripts": {
+    "postinstall": "cd be && npm install",
+    "setup": "cd be && npm install",
+    "predev": "cd be && npm install",
+    "dev": "cd be && npm run dev",
+    "start": "cd be && npm run start",
+    "migrate": "cd be && npm run migrate",
+    "seed": "cd be && npm run seed",
+    "create-admin": "cd be && npm run create-admin"
+  },
+  "engines": {
+    "node": ">=16"
+  }
+}
