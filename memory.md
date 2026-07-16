@@ -138,3 +138,177 @@ Technical debt:
 Pending task:
 - Jalankan `npm run dev` normal saat ingin menyalakan backend; command tersebut long-running karena menjalankan nodemon.
 - Tinjau vulnerability backend secara terpisah dengan hati-hati.
+
+[2026-07-14] — Landing page interaction refinement — Merapikan `fe/index.html` dengan header floating rounded, tombol navigasi section yang lebih tegas, dark/light mode persist di `localStorage`, CTA akses yang dipusatkan di hero, dan penggantian teks brand menjadi `Sistem Informasi Penjualan` — User meminta landing page terlihat lebih menarik, padat, interaktif, dan tidak terlalu banyak tombol akses yang berulang.
+
+### 2026-07-14 — Landing Page Interaction Refinement
+
+Sudah dikerjakan:
+- Mengubah header landing page menjadi floating/sticky rounded dengan shadow dan backdrop blur.
+- Membuat link navigasi `Data`, `Fitur`, `Alur`, dan `Akses` terlihat seperti tombol section yang jelas bisa diklik.
+- Menambahkan toggle dark/light mode dengan animasi, icon berubah, dan preferensi tersimpan di `localStorage`.
+- Memadatkan gap awal hero agar konten pertama lebih dekat dengan header.
+- Memusatkan CTA utama hanya di hero: `Buka Menu Pelanggan` dan `Masuk Panel Admin`.
+- Menghapus CTA akses duplikat dari section akses, final CTA, dan link footer.
+- Mengganti teks `Warung Bakso Tulus`/`SIP Bakso Tulus` menjadi konteks umum `Sistem Informasi Penjualan`.
+- Menambahkan micro animation tambahan pada header, tombol utama, metric pill, feature card, dan access card.
+- Mengupdate root `index.html` agar teks fallback redirect memakai `Sistem Informasi Penjualan`.
+
+Keputusan penting:
+- Landing page tetap satu sumber di `fe/index.html`; root `index.html` hanya redirect ke `./fe/`.
+- Akses pelanggan/admin dibuat terpusat di hero supaya halaman tidak terasa penuh tombol berulang.
+- Dark mode dibuat tanpa dependency baru agar tetap cocok dengan frontend static CDN.
+
+Technical debt:
+- Belum ada visual regression test otomatis untuk landing page.
+- Mockup dashboard/phone masih representasi HTML/CSS, bukan screenshot live aplikasi.
+
+Pending task:
+- Uji manual di browser desktop dan mobile untuk memastikan spacing header floating sesuai harapan desain.
+- Jika UI admin/pelanggan berubah besar, sesuaikan kembali mockup landing page agar tetap representatif.
+
+[2026-07-14] — Landing page soft UI refinement — Menghaluskan dark mode, menyeragamkan radius komponen, mengurangi agresivitas tombol header, memperbaiki offset scroll section, memusatkan icon fitur, dan mengganti nomor alur menjadi icon — User meminta tampilan lebih dekat ke referensi Dribbble, lebih lembut dilihat, dan section tidak tertutup/terasa janggal saat diklik dari header.
+
+### 2026-07-14 — Landing Page Soft UI Refinement
+
+Sudah dikerjakan:
+- Menyesuaikan palette dark mode agar lebih soft dan tidak terlalu kontras/tajam.
+- Menyeragamkan radius komponen utama lewat token radius baru.
+- Mengubah nav header menjadi pill yang lebih halus, bukan tombol merah/outline yang terasa memaksa.
+- Menambahkan `scroll-padding-top` dan `scroll-margin-top` agar klik section dari header tidak tertutup navbar floating.
+- Mengurangi vertical padding section agar spacing antar-section lebih rapi.
+- Membuat feature card center-aligned dengan icon lebih besar.
+- Menghapus nomor `01-04` pada alur dan menggantinya dengan icon flow.
+- Menyesuaikan kartu bento/dark panel agar tidak muncul terlalu terang di dark mode.
+
+Keputusan penting:
+- Header tetap floating, tetapi nav item dibuat lebih subtle agar sesuai gaya SaaS/Dribbble.
+- Alur memakai icon bisnis, bukan angka, agar visual lebih clean.
+
+Technical debt:
+- Belum dilakukan visual QA otomatis/screenshot lintas viewport.
+
+Pending task:
+- Review manual di browser untuk memastikan posisi scroll anchor sudah pas di semua viewport.
+
+[2026-07-14] — Landing page density and anchor refinement — Mengecilkan navbar, menghapus wrapper kotak CTA hero, memperbaiki scroll navbar dengan offset JavaScript, merapikan feature cards, redesign access cards tanpa contoh menu spesifik, mengganti final CTA/footer dengan komposisi brand-copyright-back-to-top — User menandai navbar terlalu besar, gap hero terlalu jauh, anchor section tidak pas, kartu fitur terlalu kosong, area akses kurang padat, serta footer/CTA bawah kurang menarik.
+
+### 2026-07-14 — Landing Page Density and Anchor Refinement
+
+Sudah dikerjakan:
+- Navbar dibuat lebih ringkas seperti referensi pill navbar.
+- Gap hero setelah navbar dipadatkan.
+- Wrapper luar pada tombol hero dihapus agar CTA tidak terlihat kotak bertumpuk.
+- Scroll section dari navbar diganti memakai offset JavaScript dan active state halus.
+- Feature card dibuat lebih compact, simetris, dan icon tidak terlalu kecil.
+- Semua teks contoh `Bakso Urat`, `Mie Ayam`, dan `Es Jeruk` di landing page diganti dengan istilah menu netral.
+- Section akses diredesign menjadi role summary yang lebih padat dengan flow chips.
+- Final CTA ditulis ulang untuk menjelaskan fungsi project secara lebih jelas.
+- Footer diganti menjadi brand, copyright, dan tombol kembali ke atas.
+
+Keputusan penting:
+- Landing page tidak menampilkan contoh menu spesifik agar tetap netral untuk Sistem Informasi Penjualan.
+- Navigasi section memakai JavaScript offset karena CSS `scroll-padding` saja belum presisi dengan navbar floating/sticky.
+
+Technical debt:
+- Belum ada visual QA otomatis; perlu cek manual desktop/mobile untuk memastikan hasil sesuai screenshot terbaru.
+
+Pending task:
+- Jika masih terasa kurang padat setelah dilihat di browser, pertimbangkan mengurangi ukuran mockup hero atau jumlah kartu fitur.
+
+[2026-07-14] — Landing page navbar and full-section refinement — Menyederhanakan navbar, menghapus switch dark mode bertumpuk, memperbaiki active state default, membuat section lebih full-screen, memperbesar icon fitur, merapikan final CTA, dan memindahkan tombol back-to-top menjadi floating setelah scroll — User menandai navbar terlihat double-line, `Data` aktif saat default, anchor section belum nyaman, icon fitur terlalu kecil, CTA bawah tidak simetris, dan tombol back-to-top sebaiknya mengambang.
+
+### 2026-07-14 — Landing Page Navbar and Full-Section Refinement
+
+Sudah dikerjakan:
+- Menghapus border tambahan pada group navbar agar tidak terlihat bertumpuk.
+- Mengubah toggle dark/light mode dari switch bertingkat menjadi satu icon sederhana.
+- Mengganti scroll-spy IntersectionObserver dengan kalkulasi scroll deterministik supaya `Data` tidak aktif saat masih di hero.
+- Menambahkan active state hanya saat section benar-benar sudah terlewati/terpilih.
+- Membuat section utama memakai tinggi minimal viewport agar tampil lebih utuh per layar.
+- Memperbesar icon di feature card agar proporsional dengan ukuran kartu.
+- Memperbaiki selector CTA bawah agar item ringkasan tidak saling override dan tidak menimpa.
+- Memindahkan tombol kembali ke atas menjadi floating fixed button yang muncul setelah user scroll.
+- Footer disederhanakan menjadi brand dan copyright.
+
+Keputusan penting:
+- Back-to-top tidak lagi menjadi bagian layout footer, tetapi kontrol floating.
+- Active navbar tidak memiliki default section saat posisi halaman masih di hero.
+
+Technical debt:
+- Tetap perlu visual QA manual di browser karena perubahan ini banyak terkait spacing dan viewport.
+
+Pending task:
+- Cek ulang di viewport desktop 1366/1920 dan mobile setelah refresh cache browser.
+
+[2026-07-14] — Landing page hero/nav visibility and CTA polish — Menjadikan navbar fixed tersembunyi saat hero lalu muncul setelah scroll, mengubah anchor click ke awal section, menyembunyikan metric hero pada layar pendek, membuat feature card horizontal compact, dan menulis ulang CTA bawah tanpa copy “landing page ini” — User meminta hero tidak terlihat terpotong, navbar lebih simetris, setiap section tampil penuh saat diklik, icon fitur tidak pecah/kecil, dan CTA bawah lebih menarik.
+
+### 2026-07-14 — Landing Page Hero/Nav Visibility and CTA Polish
+
+Sudah dikerjakan:
+- Navbar tidak tampil di posisi hero awal agar tidak terlihat memotong area pertama.
+- Navbar muncul setelah user scroll, tetap floating/fixed.
+- Isi navbar disederhanakan: group nav tanpa border tambahan, dark-mode button hanya icon.
+- Klik nav diarahkan ke `offsetTop` section agar section sebelumnya tidak muncul di atas.
+- Hero metrics disembunyikan pada viewport desktop yang pendek agar tidak terpotong.
+- Feature card dibuat horizontal compact antara icon dan teks.
+- CTA bawah ditulis ulang: fokus pada manfaat sistem, bukan menjelaskan “landing page”.
+- CTA summary dibuat grid tiga kolom yang lebih seimbang.
+
+Keputusan penting:
+- Navbar tidak menjadi elemen default di hero, melainkan contextual navigation setelah scroll.
+- Section anchor mengutamakan awal section bersih, bukan offset di bawah navbar.
+
+Technical debt:
+- Perlu visual QA manual karena navbar fixed dan anchor scroll sangat tergantung tinggi viewport.
+
+Pending task:
+- Jika user ingin navbar tetap terlihat di hero, buat varian translucent tanpa menumpuk area hero.
+
+[2026-07-14] — Landing page navbar always visible — Mengembalikan navbar agar selalu tampil sejak hero dan menghapus logic hide/show khusus navbar — User menegaskan navbar tidak boleh disembunyikan, tetapi tetap harus tampil rapi sebagai navigasi utama.
+
+[2026-07-14] — Landing page feature section restore — Mengembalikan card fitur ke layout vertikal-center dengan selector teks spesifik dan icon proporsional — User menilai layout horizontal baru membuat section fitur terlihat jelek karena teks menyempit dan tidak serapi versi sebelumnya.
+
+[2026-07-14] — Landing page access section full height — Mengubah tinggi section utama dan final CTA menjadi `100vh` penuh — User menandai section akses masih memperlihatkan section berikutnya di bawah saat dibuka dari navbar.
+
+[2026-07-14] — Landing page navbar width alignment — Menyamakan lebar `.site-nav` dengan `.shell` konten menjadi `1180px` — User meminta panjang navbar selaras dengan konten hero di bawahnya agar ujung kiri dan kanan terlihat rapi.
+
+[2026-07-15] — Landing page hero spacing — Mengubah padding section hero home di `fe/index.html` menjadi top-heavy dan bottom-compact, termasuk override mobile — User menandai jarak hero ke navbar terlalu rapat sementara ruang kosong bawah terlalu besar.
+
+[2026-07-15] — Landing page navbar anchor offset — Mengubah scroll klik navbar agar mengurangi tinggi navbar dan menambahkan `scroll-margin-top` pada section — User menandai bagian atas section Data terpotong saat diklik dari navbar fixed.
+
+[2026-07-15] — Landing page clean section anchors — Mengembalikan klik navbar ke awal section (`target.offsetTop`), menjadikan offset eksternal nol, dan memindahkan ruang aman ke padding internal section — User menandai section sebelumnya masih terlihat di atas saat klik Data.
+
+[2026-07-15] — Landing page copy cleanup — Mengganti sisa kata `warung` di `fe/index.html` menjadi `usaha` — User meminta semua kata warung di landing page dihilangkan agar copy lebih umum.
+
+[2026-07-15] — Landing page navbar menu style — Mengubah menu navbar menjadi satu kapsul `nav-menu` dengan item aktif yang menyala dan tombol theme terpisah — User meminta navbar terutama bagian menu disamakan dengan referensi pill-menu.
+
+[2026-07-15] — Landing page navbar awal menu — Menambahkan link `Awal` ke menu navbar yang mengarah ke `#top` — User meminta halaman paling awal juga tersedia di menu navbar.
+
+[2026-07-15] — Landing page navbar home label and height — Mengganti label menu `Awal` menjadi `Beranda` dan menetapkan tinggi navbar desktop 70px serta mobile 60px — User meminta teks menu bukan `Awal` dan tinggi navbar disamakan dengan referensi kedua.
+
+[2026-07-15] — Landing page navbar compact height — Mengecilkan navbar desktop menjadi 58px, mobile 54px, logo 32px, menu item 32px, dan theme button 38px — User menandai navbar sebelumnya justru makin tinggi dari referensi.
+
+[2026-07-15] — Landing page navbar brand typography — Menaikkan font brand `SIP` menjadi 14px dan subtitle menjadi 10.5px dengan line-height rapat — User menilai ukuran navbar sudah bagus tetapi teks `Sistem informasi penjualan` terlalu kecil.
+
+[2026-07-15] — Landing page light mode contrast refinement — Menambahkan token light/dark untuk menu navbar, active nav button, final CTA, dan footer; light mode memakai nav-menu lebih jelas serta area bawah terang lembut — User menandai button navbar light mode terlalu samar dan bagian bawah terlalu hitam/kontras saat light mode.
+
+[2026-07-15] — Landing page footer separation — Menambahkan background footer yang lebih putih, top border, shadow halus, dan garis aksen gradient di atas footer — User meminta pembeda visual antara isi final CTA dan footer pada light mode.
+
+[2026-07-15] — Landing page access copy cleanup — Mengganti copy `Landing page ini...` menjadi kalimat akses peran yang lebih natural — User meminta kata `landing page` dihilangkan dan diganti copy yang lebih bagus.
+
+### 2026-07-15 — Landing Page Hero Spacing
+
+Sudah dikerjakan:
+- Menyesuaikan padding `.hero` desktop dari nilai fixed kecil menjadi `clamp(86px, 9vh, 110px) 0 clamp(20px, 3vh, 30px)`.
+- Menyesuaikan padding `.hero` mobile menjadi `96px 0 30px` agar navbar fixed tetap punya ruang.
+- Menjaga struktur HTML, link pelanggan/admin, navbar, dan section lain tetap sama.
+
+Keputusan penting:
+- Hero tetap `min-height: 100vh`, tetapi balance padding dibuat lebih berat ke atas agar konten turun sedikit dan ruang kosong bawah berkurang.
+
+Technical debt:
+- Belum ada visual regression test otomatis untuk landing page.
+
+Pending task:
+- Review manual di browser setelah refresh cache untuk memastikan jarak atas/bawah sudah sesuai selera desain.

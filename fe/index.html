@@ -4,9 +4,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>SIP Warung Bakso Tulus | Sistem Penjualan & Menu Digital</title>
-  <meta name="description" content="Sistem Informasi Penjualan untuk menu digital, pesanan pelanggan, transaksi kasir, stok, dan laporan Warung Bakso Tulus.">
-  <meta property="og:title" content="SIP Warung Bakso Tulus">
+  <title>Sistem Informasi Penjualan | Menu Digital & Dashboard</title>
+  <meta name="description" content="Sistem Informasi Penjualan untuk menu digital, pesanan pelanggan, transaksi kasir, stok, dan laporan usaha.">
+  <meta property="og:title" content="Sistem Informasi Penjualan">
   <meta property="og:description" content="Kelola menu, pesanan, transaksi, stok, dan laporan dalam satu sistem penjualan.">
   <meta property="og:type" content="website">
   <link rel="icon" href="./assets/img/favicon.svg" type="image/svg+xml">
@@ -14,10 +14,38 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.x/css/materialdesignicons.min.css" rel="stylesheet">
+  <script>
+    (function () {
+      try {
+        const savedTheme = localStorage.getItem('sip_landing_theme')
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        document.documentElement.dataset.theme = savedTheme || (prefersDark ? 'dark' : 'light')
+      } catch (error) {
+        document.documentElement.dataset.theme = 'light'
+      }
+    })()
+  </script>
   <style>
     :root {
+      color-scheme: light;
       --bg: #f6f7f9;
+      --bg-top: #fffafa;
+      --bg-bottom: #ffffff;
       --panel: #ffffff;
+      --panel-muted: #f8fafc;
+      --surface: rgba(255, 255, 255, 0.78);
+      --surface-strong: rgba(255, 255, 255, 0.92);
+      --nav-bg: rgba(255, 255, 255, 0.86);
+      --nav-item: rgba(255, 255, 255, 0.72);
+      --nav-item-hover: rgba(194, 55, 47, 0.10);
+      --nav-menu-bg: rgba(248, 250, 252, 0.92);
+      --nav-menu-border: #dce4ee;
+      --nav-menu-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), 0 8px 18px rgba(15, 23, 42, 0.05);
+      --nav-active-bg: var(--red);
+      --nav-active-text: #ffffff;
+      --nav-active-border: rgba(194, 55, 47, 0.58);
+      --nav-active-shadow: 0 10px 20px rgba(194, 55, 47, 0.18);
+      --nav-control-bg: rgba(248, 250, 252, 0.92);
       --text: #171f2f;
       --muted: #667085;
       --border: #e7ebf0;
@@ -28,8 +56,85 @@
       --green-soft: #dff8ea;
       --yellow-soft: #fff4d8;
       --blue-soft: #eaf3ff;
-      --radius: 8px;
+      --radius: 18px;
+      --radius-lg: 24px;
+      --radius-xl: 30px;
       --shadow: 0 18px 46px rgba(17, 24, 39, 0.08);
+      --nav-shadow: 0 18px 42px rgba(17, 24, 39, 0.10);
+      --hero-glow-red: rgba(194, 55, 47, 0.12);
+      --hero-glow-blue: rgba(37, 99, 235, 0.10);
+      --dark-band: #111827;
+      --dark-band-soft: #171f2f;
+      --bottom-bg:
+        radial-gradient(circle at 18% 10%, rgba(194, 55, 47, 0.11), transparent 34%),
+        linear-gradient(180deg, #fff9f8 0%, #f1f5f9 100%);
+      --bottom-panel: rgba(255, 255, 255, 0.78);
+      --bottom-card: rgba(255, 255, 255, 0.84);
+      --bottom-text: var(--text);
+      --bottom-muted: var(--muted);
+      --bottom-border: rgba(194, 55, 47, 0.14);
+      --bottom-shadow: 0 24px 60px rgba(17, 24, 39, 0.08);
+      --footer-bg: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+      --footer-border: #dde5ee;
+      --footer-shadow: 0 -18px 48px rgba(15, 23, 42, 0.06);
+      --footer-accent: linear-gradient(90deg, transparent 0%, rgba(194, 55, 47, 0.30) 22%, rgba(194, 55, 47, 0.12) 50%, rgba(194, 55, 47, 0.30) 78%, transparent 100%);
+      --footer-strong: var(--text);
+      --footer-muted: var(--muted);
+      --footer-chip-bg: rgba(255, 255, 255, 0.78);
+      --footer-chip-border: var(--border);
+      --section-offset: 0px;
+    }
+
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #111a28;
+      --bg-top: #1b1724;
+      --bg-bottom: #0f1724;
+      --panel: #182232;
+      --panel-muted: #1d293a;
+      --surface: rgba(24, 34, 50, 0.70);
+      --surface-strong: rgba(24, 34, 50, 0.92);
+      --nav-bg: rgba(18, 26, 39, 0.78);
+      --nav-item: rgba(255, 255, 255, 0.045);
+      --nav-item-hover: rgba(194, 55, 47, 0.18);
+      --nav-menu-bg: rgba(255, 255, 255, 0.035);
+      --nav-menu-border: rgba(226, 232, 240, 0.16);
+      --nav-menu-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      --nav-active-bg: rgba(194, 55, 47, 0.18);
+      --nav-active-text: var(--red);
+      --nav-active-border: rgba(194, 55, 47, 0.24);
+      --nav-active-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      --nav-control-bg: rgba(255, 255, 255, 0.035);
+      --text: #f4f0ec;
+      --muted: #c0cadb;
+      --border: rgba(226, 232, 240, 0.16);
+      --red-soft: rgba(194, 55, 47, 0.18);
+      --green-soft: rgba(16, 185, 129, 0.16);
+      --yellow-soft: rgba(245, 158, 11, 0.18);
+      --blue-soft: rgba(37, 99, 235, 0.18);
+      --shadow: 0 24px 64px rgba(0, 0, 0, 0.22);
+      --nav-shadow: 0 22px 58px rgba(0, 0, 0, 0.24);
+      --hero-glow-red: rgba(194, 55, 47, 0.16);
+      --hero-glow-blue: rgba(96, 165, 250, 0.10);
+      --dark-band: #111a28;
+      --dark-band-soft: #182232;
+      --bottom-bg:
+        radial-gradient(circle at 18% 10%, rgba(194, 55, 47, 0.22), transparent 34%),
+        var(--dark-band);
+      --bottom-panel: rgba(255, 255, 255, 0.06);
+      --bottom-card: rgba(255, 255, 255, 0.06);
+      --bottom-text: #ffffff;
+      --bottom-muted: rgba(255, 255, 255, 0.70);
+      --bottom-border: rgba(255, 255, 255, 0.12);
+      --bottom-shadow: 0 26px 70px rgba(0, 0, 0, 0.16);
+      --footer-bg: var(--dark-band-soft);
+      --footer-border: rgba(255, 255, 255, 0.10);
+      --footer-shadow: 0 -18px 48px rgba(0, 0, 0, 0.18);
+      --footer-accent: linear-gradient(90deg, transparent 0%, rgba(194, 55, 47, 0.44) 22%, rgba(255, 255, 255, 0.16) 50%, rgba(194, 55, 47, 0.44) 78%, transparent 100%);
+      --footer-strong: #ffffff;
+      --footer-muted: rgba(255, 255, 255, 0.62);
+      --footer-chip-bg: rgba(255, 255, 255, 0.04);
+      --footer-chip-border: rgba(255, 255, 255, 0.12);
     }
 
     * {
@@ -38,6 +143,14 @@
 
     html {
       scroll-behavior: smooth;
+      scroll-padding-top: var(--section-offset);
+    }
+
+    html.theme-changing *,
+    html.theme-changing *::before,
+    html.theme-changing *::after {
+      transition-duration: 0.32s !important;
+      transition-timing-function: ease !important;
     }
 
     body {
@@ -45,11 +158,12 @@
       min-height: 100vh;
       color: var(--text);
       background:
-        radial-gradient(circle at 8% 4%, rgba(194, 55, 47, 0.12), transparent 28%),
-        radial-gradient(circle at 88% 12%, rgba(37, 99, 235, 0.10), transparent 30%),
-        linear-gradient(180deg, #fffafa 0%, var(--bg) 36%, #ffffff 100%);
+        radial-gradient(circle at 8% 4%, var(--hero-glow-red), transparent 28%),
+        radial-gradient(circle at 88% 12%, var(--hero-glow-blue), transparent 30%),
+        linear-gradient(180deg, var(--bg-top) 0%, var(--bg) 36%, var(--bg-bottom) 100%);
       font-family: Inter, Segoe UI, Arial, sans-serif;
       letter-spacing: 0;
+      transition: color 0.35s ease, background 0.35s ease;
     }
 
     a {
@@ -63,38 +177,57 @@
     }
 
     .site-nav {
-      position: sticky;
-      top: 0;
+      position: fixed;
+      top: 14px;
+      left: 50%;
       z-index: 20;
-      border-bottom: 1px solid rgba(231, 235, 240, 0.76);
-      background: rgba(255, 255, 255, 0.82);
-      backdrop-filter: blur(16px);
+      width: min(1180px, calc(100% - 32px));
+      height: 58px;
+      margin: 0;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--nav-bg);
+      backdrop-filter: blur(18px);
+      box-shadow: var(--nav-shadow);
+      opacity: 1;
+      pointer-events: auto;
+      transform: translate(-50%, 0);
+      transition: opacity 0.24s ease, transform 0.24s ease;
     }
 
     .nav-inner {
-      min-height: 72px;
+      width: auto;
+      height: 100%;
+      min-height: 0;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 18px;
+      gap: 12px;
+      padding: 0 14px;
     }
 
     .brand {
       display: inline-flex;
       align-items: center;
-      gap: 10px;
+      gap: 9px;
       font-weight: 900;
     }
 
     .brand-mark {
-      width: 42px;
-      height: 42px;
+      width: 32px;
+      height: 32px;
       display: grid;
       place-items: center;
       border-radius: var(--radius);
       color: #ffffff;
       background: linear-gradient(135deg, #e85d4f, var(--red));
       box-shadow: 0 12px 24px rgba(194, 55, 47, 0.22);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .brand:hover .brand-mark {
+      transform: rotate(-4deg) translateY(-1px);
+      box-shadow: 0 16px 30px rgba(194, 55, 47, 0.28);
     }
 
     .brand-copy span,
@@ -104,25 +237,39 @@
 
     .brand-copy span {
       color: var(--text);
-      font-size: 15px;
-      line-height: 1.1;
+      font-size: 14px;
+      line-height: 1.05;
     }
 
     .brand-copy small {
-      margin-top: 2px;
+      margin-top: 3px;
       color: var(--muted);
-      font-size: 11px;
-      font-weight: 750;
+      font-size: 10.5px;
+      line-height: 1.1;
+      font-weight: 800;
     }
 
     .nav-links {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 12px;
+      border-radius: 999px;
+      padding: 0;
+      background: transparent;
+    }
+
+    .nav-menu {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      border: 1px solid var(--nav-menu-border);
+      border-radius: 999px;
+      padding: 4px;
+      background: var(--nav-menu-bg);
+      box-shadow: var(--nav-menu-shadow);
     }
 
     .nav-link,
-    .nav-action,
     .btn {
       min-height: 42px;
       display: inline-flex;
@@ -134,46 +281,115 @@
       border: 1px solid transparent;
       font-size: 13px;
       font-weight: 850;
-      transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
     }
 
     .nav-link {
+      min-width: 80px;
+      min-height: 32px;
       color: var(--muted);
+      border-color: transparent;
+      border-radius: 999px;
+      background: transparent;
+      box-shadow: none;
     }
 
-    .nav-link:hover {
+    .nav-link:hover,
+    .nav-link:focus-visible {
       color: var(--red);
-      background: var(--red-soft);
+      background: var(--nav-item-hover);
+      border-color: transparent;
+      box-shadow: none;
+      outline: 0;
+      transform: translateY(-1px);
     }
 
-    .nav-action,
+    .nav-link.is-active {
+      color: var(--nav-active-text);
+      background: var(--nav-active-bg);
+      border-color: var(--nav-active-border);
+      box-shadow: var(--nav-active-shadow);
+      transform: none;
+    }
+
     .btn-primary {
       color: #ffffff;
       background: var(--red);
       box-shadow: 0 12px 24px rgba(194, 55, 47, 0.22);
     }
 
-    .nav-action:hover,
     .btn-primary:hover,
     .btn-soft:hover,
     .btn-light:hover {
       transform: translateY(-2px);
     }
 
+    .theme-toggle {
+      width: 38px;
+      height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 0;
+      color: var(--text);
+      background: var(--nav-control-bg);
+      cursor: pointer;
+      font-size: 16px;
+      transition: transform 0.18s ease, color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .theme-toggle:hover,
+    .theme-toggle:focus-visible {
+      transform: translateY(-1px);
+      color: var(--red);
+      background: var(--nav-item-hover);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      outline: 0;
+    }
+
+    .theme-icon {
+      display: block;
+      line-height: 1;
+      transition: transform 0.26s ease, color 0.26s ease;
+    }
+
+    :root[data-theme="dark"] .theme-icon {
+      color: #f8d66d;
+      transform: rotate(-18deg);
+    }
+
     .btn {
       min-height: 52px;
+      position: relative;
+      overflow: hidden;
       padding: 0 18px;
       font-size: 15px;
+      isolation: isolate;
     }
 
     .btn-primary:hover {
       background: var(--red-dark);
     }
 
+    .btn-primary::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background: linear-gradient(110deg, transparent 0%, rgba(255, 255, 255, 0.22) 42%, transparent 70%);
+      transform: translateX(-120%);
+    }
+
+    .btn-primary:hover::after {
+      animation: button-sheen 0.72s ease;
+    }
+
     .btn-soft {
       color: var(--text);
-      border-color: #d9dee7;
-      background: #ffffff;
+      border-color: var(--border);
+      background: var(--panel);
     }
 
     .btn-soft:hover {
@@ -191,17 +407,20 @@
     .hero {
       position: relative;
       overflow: hidden;
-      padding: 82px 0 76px;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: clamp(86px, 9vh, 110px) 0 clamp(20px, 3vh, 30px);
     }
 
     .hero::before {
       content: "";
       position: absolute;
-      inset: 34px auto auto 50%;
+      inset: 8px auto auto 50%;
       width: min(620px, 64vw);
       height: min(620px, 64vw);
       border-radius: 50%;
-      background: radial-gradient(circle, rgba(253, 232, 231, 0.95), rgba(253, 232, 231, 0));
+      background: radial-gradient(circle, var(--red-soft), rgba(253, 232, 231, 0));
       transform: translateX(-3%);
       pointer-events: none;
     }
@@ -223,7 +442,7 @@
       border-radius: 999px;
       padding: 8px 12px;
       color: var(--red);
-      background: #fff8f7;
+      background: var(--surface-strong);
       font-size: 13px;
       font-weight: 850;
     }
@@ -253,8 +472,14 @@
     .hero-actions {
       display: flex;
       flex-wrap: wrap;
+      justify-content: flex-start;
       gap: 12px;
-      margin-top: 30px;
+      margin-top: 26px;
+      width: min(570px, 100%);
+    }
+
+    .hero-actions .btn {
+      min-width: 230px;
     }
 
     .hero-metrics {
@@ -269,8 +494,15 @@
       border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 14px;
-      background: rgba(255, 255, 255, 0.76);
+      background: var(--surface);
       box-shadow: 0 10px 24px rgba(17, 24, 39, 0.05);
+      transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+    }
+
+    .metric-pill:hover {
+      transform: translateY(-4px);
+      border-color: rgba(194, 55, 47, 0.24);
+      box-shadow: 0 18px 34px rgba(194, 55, 47, 0.08);
     }
 
     .metric-pill strong,
@@ -301,9 +533,9 @@
     .dashboard-frame,
     .phone-frame,
     .floating-card {
-      border: 1px solid rgba(226, 232, 240, 0.95);
+      border: 1px solid var(--border);
       border-radius: var(--radius);
-      background: rgba(255, 255, 255, 0.90);
+      background: var(--surface-strong);
       box-shadow: var(--shadow);
       backdrop-filter: blur(10px);
     }
@@ -324,7 +556,7 @@
       gap: 12px;
       padding: 0 16px;
       border-bottom: 1px solid var(--border);
-      background: #ffffff;
+      background: var(--panel);
     }
 
     .browser-dots {
@@ -358,7 +590,7 @@
     .mock-sidebar {
       padding: 18px 14px;
       border-right: 1px solid var(--border);
-      background: #fbfcfd;
+      background: var(--bg);
     }
 
     .mock-logo {
@@ -389,7 +621,7 @@
       margin-bottom: 7px;
       padding: 0 10px;
       border-radius: var(--radius);
-      color: #667085;
+      color: var(--muted);
       font-size: 11px;
       font-weight: 850;
     }
@@ -459,7 +691,7 @@
       border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 14px;
-      background: #ffffff;
+      background: var(--panel);
     }
 
     .kpi-label {
@@ -504,7 +736,7 @@
     .top-card {
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      background: #ffffff;
+      background: var(--panel);
     }
 
     .chart-card {
@@ -605,7 +837,7 @@
       bottom: 0;
       width: 188px;
       padding: 10px;
-      background: #171f2f;
+      background: var(--dark-band-soft);
       animation: float-card 5.6s ease-in-out infinite;
     }
 
@@ -613,7 +845,7 @@
       overflow: hidden;
       min-height: 340px;
       border-radius: var(--radius);
-      background: #ffffff;
+      background: var(--panel);
     }
 
     .phone-top {
@@ -649,8 +881,8 @@
       margin: 14px auto 0;
       border-radius: var(--radius);
       background:
-        linear-gradient(90deg, #111827 10px, transparent 10px) 0 0 / 22px 22px,
-        linear-gradient(#111827 10px, transparent 10px) 0 0 / 22px 22px,
+        linear-gradient(90deg, var(--dark-band) 10px, transparent 10px) 0 0 / 22px 22px,
+        linear-gradient(var(--dark-band) 10px, transparent 10px) 0 0 / 22px 22px,
         #ffffff;
       overflow: hidden;
     }
@@ -682,7 +914,7 @@
       height: 28px;
       border-radius: var(--radius);
       color: var(--muted);
-      background: #f3f5f8;
+      background: var(--bg);
       font-size: 10px;
       font-weight: 850;
     }
@@ -703,7 +935,7 @@
       gap: 8px;
       align-items: center;
       padding: 8px;
-      border: 1px solid #edf0f5;
+      border: 1px solid var(--border);
       border-radius: var(--radius);
     }
 
@@ -825,7 +1057,11 @@
     }
 
     .section {
-      padding: 78px 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      scroll-margin-top: var(--section-offset);
+      padding: clamp(92px, 10vh, 116px) 0 clamp(20px, 3vh, 30px);
     }
 
     .section-head {
@@ -837,8 +1073,15 @@
     }
 
     .section-kicker {
-      margin: 0 0 10px;
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      margin: 0 0 12px;
+      border: 1px solid rgba(194, 55, 47, 0.16);
+      border-radius: 999px;
+      padding: 7px 11px;
       color: var(--red);
+      background: var(--red-soft);
       font-size: 13px;
       font-weight: 950;
     }
@@ -872,7 +1115,7 @@
       border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 24px;
-      background: rgba(255, 255, 255, 0.88);
+      background: var(--panel);
       box-shadow: 0 16px 38px rgba(17, 24, 39, 0.06);
       transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
     }
@@ -887,7 +1130,7 @@
       grid-row: span 2;
       min-height: 474px;
       color: #ffffff;
-      background: #171f2f;
+      background: var(--dark-band-soft);
     }
 
     .bento-card h3 {
@@ -911,14 +1154,14 @@
     }
 
     .icon-box {
-      width: 42px;
-      height: 42px;
+      width: 50px;
+      height: 50px;
       display: grid;
       place-items: center;
       border-radius: var(--radius);
       color: var(--red);
       background: var(--red-soft);
-      font-size: 22px;
+      font-size: 24px;
     }
 
     .large .icon-box {
@@ -978,42 +1221,71 @@
     .feature-list {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 14px;
-      margin-top: 14px;
+      gap: 12px;
+      margin-top: 12px;
     }
 
     .feature-card {
+      display: flex;
+      min-height: 172px;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 22px;
-      background: #ffffff;
+      padding: 20px 18px;
+      background: var(--panel);
+      text-align: center;
       box-shadow: 0 14px 34px rgba(17, 24, 39, 0.05);
+      transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-5px);
+      border-color: rgba(194, 55, 47, 0.30);
+      box-shadow: 0 22px 42px rgba(194, 55, 47, 0.10);
     }
 
     .feature-card strong,
-    .feature-card span {
+    .feature-card > span {
       display: block;
     }
 
     .feature-card strong {
-      margin-top: 16px;
+      margin-top: 14px;
       color: var(--text);
-      font-size: 17px;
+      font-size: 16px;
       line-height: 1.32;
       font-weight: 950;
     }
 
-    .feature-card span {
+    .feature-card > span {
       margin-top: 8px;
       color: var(--muted);
-      font-size: 13px;
-      line-height: 1.55;
+      font-size: 12px;
+      line-height: 1.48;
       font-weight: 650;
+      max-width: 250px;
+    }
+
+    .feature-card .icon-box {
+      width: 54px;
+      height: 54px;
+      margin: 0 auto;
+      font-size: 24px;
+      flex: 0 0 auto;
+    }
+
+    .feature-card .icon-box .mdi {
+      font-size: 24px;
+      line-height: 1;
     }
 
     .flow-section {
       color: #ffffff;
-      background: #111827;
+      background:
+        radial-gradient(circle at 10% 0%, rgba(194, 55, 47, 0.14), transparent 32%),
+        var(--dark-band);
     }
 
     .flow-section .section-title {
@@ -1036,7 +1308,7 @@
       min-height: 256px;
       border: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: var(--radius);
-      padding: 22px;
+      padding: 24px;
       background: rgba(255, 255, 255, 0.06);
       transition: transform 0.22s ease, background 0.22s ease;
     }
@@ -1046,16 +1318,19 @@
       background: rgba(255, 255, 255, 0.10);
     }
 
-    .flow-number {
-      width: 42px;
-      height: 42px;
+    .flow-icon {
+      width: 52px;
+      height: 52px;
       display: grid;
       place-items: center;
       border-radius: var(--radius);
       color: #ffffff;
       background: var(--red);
-      font-size: 15px;
-      font-weight: 950;
+      box-shadow: 0 14px 28px rgba(194, 55, 47, 0.22);
+    }
+
+    .flow-icon .mdi {
+      font-size: 24px;
     }
 
     .flow-card h3 {
@@ -1074,7 +1349,7 @@
       font-weight: 600;
     }
 
-    .flow-card .mdi {
+    .flow-ghost {
       position: absolute;
       right: 18px;
       bottom: 18px;
@@ -1091,27 +1366,35 @@
     .access-card {
       position: relative;
       overflow: hidden;
-      min-height: 318px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      gap: 24px;
+      min-height: 244px;
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(210px, 0.72fr);
+      gap: 22px;
+      align-items: center;
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 28px;
-      background: #ffffff;
+      padding: 24px;
+      background: var(--panel);
       box-shadow: 0 18px 46px rgba(17, 24, 39, 0.07);
+      transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+    }
+
+    .access-card:hover {
+      transform: translateY(-5px);
+      border-color: rgba(194, 55, 47, 0.26);
+      box-shadow: 0 24px 54px rgba(17, 24, 39, 0.12);
     }
 
     .access-card::after {
       content: "";
       position: absolute;
-      right: -80px;
-      top: -80px;
-      width: 220px;
-      height: 220px;
+      right: -54px;
+      top: -54px;
+      width: 146px;
+      height: 146px;
       border-radius: 50%;
       background: var(--red-soft);
+      opacity: 0.68;
     }
 
     .access-card.admin::after {
@@ -1121,13 +1404,13 @@
     .access-content {
       position: relative;
       z-index: 1;
-      max-width: 440px;
+      max-width: 430px;
     }
 
     .access-card h3 {
-      margin: 18px 0 10px;
+      margin: 16px 0 8px;
       color: var(--text);
-      font-size: 28px;
+      font-size: 26px;
       line-height: 1.15;
       font-weight: 950;
     }
@@ -1140,94 +1423,179 @@
       font-weight: 600;
     }
 
-    .access-actions {
+    .access-flow {
       position: relative;
       z-index: 1;
-      display: flex;
-      flex-wrap: wrap;
+      display: grid;
       gap: 10px;
     }
 
-    .mini-preview {
-      position: relative;
-      z-index: 1;
+    .flow-chip {
       display: grid;
-      gap: 9px;
-      margin-top: 22px;
-      max-width: 340px;
-    }
-
-    .mini-preview div {
-      display: grid;
-      grid-template-columns: auto 1fr auto;
+      grid-template-columns: 32px 1fr;
       gap: 10px;
       align-items: center;
-      border: 1px solid #edf0f5;
-      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      border-radius: 999px;
       padding: 10px;
-      background: #ffffff;
+      background: var(--surface-strong);
       color: var(--muted);
       font-size: 12px;
       font-weight: 800;
     }
 
-    .mini-preview .mdi {
+    .flow-chip .mdi {
+      width: 32px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
       color: var(--red);
+      background: var(--red-soft);
     }
 
-    .mini-preview b {
+    .flow-chip b {
+      display: block;
       color: var(--text);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .flow-chip span:last-child {
+      display: block;
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .access-stats {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .access-stats span {
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 8px 10px;
+      color: var(--muted);
+      background: var(--surface);
+      font-size: 11px;
+      font-weight: 800;
+      text-align: center;
     }
 
     .final-cta {
-      padding: 82px 0;
-      color: #ffffff;
-      background:
-        radial-gradient(circle at 18% 0%, rgba(194, 55, 47, 0.34), transparent 32%),
-        #111827;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      scroll-margin-top: var(--section-offset);
+      padding: clamp(92px, 10vh, 116px) 0 clamp(20px, 3vh, 30px);
+      color: var(--bottom-text);
+      background: var(--bottom-bg);
     }
 
     .cta-panel {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: 28px;
-      align-items: center;
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      gap: 24px;
+      border: 1px solid var(--bottom-border);
       border-radius: var(--radius);
-      padding: 34px;
-      background: rgba(255, 255, 255, 0.06);
+      padding: 32px;
+      background: var(--bottom-panel);
+      box-shadow: var(--bottom-shadow);
+    }
+
+    .cta-copy {
+      max-width: 840px;
+      margin-inline: auto;
+      text-align: center;
     }
 
     .cta-panel h2 {
       margin: 0;
-      max-width: 760px;
-      color: #ffffff;
-      font-size: 38px;
-      line-height: 1.14;
+      color: var(--bottom-text);
+      font-size: 32px;
+      line-height: 1.12;
       font-weight: 950;
     }
 
     .cta-panel p {
-      margin: 14px 0 0;
-      max-width: 690px;
-      color: rgba(255, 255, 255, 0.70);
+      margin: 12px 0 0;
+      color: var(--bottom-muted);
       font-size: 16px;
       line-height: 1.64;
       font-weight: 600;
     }
 
-    .cta-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
+    .cta-summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .cta-summary > div {
+      display: grid;
+      grid-template-columns: 42px 1fr;
+      gap: 10px;
+      align-items: center;
+      border: 1px solid var(--bottom-border);
+      border-radius: var(--radius);
+      padding: 12px;
+      background: var(--bottom-card);
+    }
+
+    .cta-summary > div > .mdi {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      color: #ffffff;
+      background: var(--red);
+    }
+
+    .cta-summary b,
+    .cta-summary > div > div > span {
+      display: block;
+    }
+
+    .cta-summary b {
+      color: var(--bottom-text);
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .cta-summary > div > div > span {
+      margin-top: 3px;
+      color: var(--bottom-muted);
+      font-size: 11px;
+      font-weight: 700;
     }
 
     .site-footer {
-      padding: 26px 0;
-      color: #7b8494;
-      background: #ffffff;
+      position: relative;
+      padding: 22px 0;
+      color: var(--muted);
+      background: var(--footer-bg);
+      border-top: 1px solid var(--footer-border);
+      box-shadow: var(--footer-shadow);
       font-size: 13px;
       font-weight: 700;
+    }
+
+    .site-footer::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--footer-accent);
+      pointer-events: none;
     }
 
     .footer-inner {
@@ -1237,11 +1605,84 @@
       gap: 16px;
     }
 
-    .footer-links {
-      display: flex;
+    .footer-brand {
+      display: inline-flex;
+      align-items: center;
       gap: 12px;
-      color: var(--text);
-      font-weight: 850;
+    }
+
+    .footer-badge {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      color: #ffffff;
+      background: var(--red);
+      font-size: 12px;
+      font-weight: 950;
+    }
+
+    .footer-brand strong,
+    .footer-brand small {
+      display: block;
+    }
+
+    .footer-brand strong {
+      color: var(--footer-strong);
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .footer-brand small {
+      margin-top: 3px;
+      color: var(--footer-muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .footer-year {
+      border: 1px solid var(--footer-chip-border);
+      border-radius: 999px;
+      padding: 10px 16px;
+      color: var(--footer-strong);
+      background: var(--footer-chip-bg);
+      font-weight: 900;
+      margin-left: auto;
+    }
+
+    .back-top {
+      position: fixed;
+      right: 28px;
+      bottom: 28px;
+      z-index: 30;
+      width: 46px;
+      height: 46px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 50%;
+      color: #ffffff;
+      background: rgba(24, 34, 50, 0.82);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.22);
+      font-size: 22px;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(12px);
+      transition: opacity 0.2s ease, transform 0.2s ease, border-color 0.18s ease, background 0.18s ease;
+    }
+
+    .back-top.is-visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+
+    .back-top:hover {
+      transform: translateY(-2px);
+      border-color: rgba(194, 55, 47, 0.34);
+      background: var(--red-soft);
     }
 
     .reveal {
@@ -1253,6 +1694,22 @@
     .reveal.is-visible {
       opacity: 1;
       transform: translateY(0);
+    }
+
+    @keyframes nav-drop {
+      from {
+        opacity: 0;
+        transform: translateY(-14px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes button-sheen {
+      from { transform: translateX(-120%); }
+      to { transform: translateX(120%); }
     }
 
     @keyframes float-showcase {
@@ -1300,7 +1757,17 @@
       }
     }
 
+    @media (max-height: 900px) and (min-width: 961px) {
+      .hero-metrics {
+        display: none;
+      }
+    }
+
     @media (max-width: 960px) {
+      .nav-menu {
+        display: none;
+      }
+
       .nav-link {
         display: none;
       }
@@ -1311,6 +1778,14 @@
 
       .section-head,
       .cta-panel {
+        grid-template-columns: 1fr;
+      }
+
+      .cta-summary {
+        grid-template-columns: 1fr;
+      }
+
+      .access-card {
         grid-template-columns: 1fr;
       }
 
@@ -1331,20 +1806,29 @@
         width: min(100% - 24px, 1180px);
       }
 
+      .site-nav {
+        top: 10px;
+        width: min(100% - 24px, 1180px);
+        height: 54px;
+        margin-top: 10px;
+        border-radius: 22px;
+      }
+
       .nav-inner {
-        min-height: 64px;
+        min-height: 0;
       }
 
       .brand-copy small {
         display: none;
       }
 
-      .nav-action span:last-child {
-        display: none;
+      .theme-toggle {
+        width: 38px;
+        height: 38px;
       }
 
       .hero {
-        padding: 54px 0 52px;
+        padding: 96px 0 30px;
       }
 
       .hero h1 {
@@ -1355,9 +1839,7 @@
         font-size: 15px;
       }
 
-      .hero-actions,
-      .cta-actions,
-      .access-actions {
+      .hero-actions {
         flex-direction: column;
       }
 
@@ -1371,6 +1853,10 @@
       .flow-track,
       .access-grid {
         grid-template-columns: 1fr;
+      }
+
+      .feature-card {
+        min-height: auto;
       }
 
       .showcase {
@@ -1408,7 +1894,7 @@
       }
 
       .section {
-        padding: 58px 0;
+        padding: 96px 0 30px;
       }
 
       .section-title,
@@ -1417,8 +1903,33 @@
       }
 
       .footer-inner {
-        align-items: flex-start;
+        align-items: stretch;
         flex-direction: column;
+      }
+
+      .footer-year {
+        width: fit-content;
+        margin-left: 0;
+      }
+
+      .back-top {
+        right: 18px;
+        bottom: 18px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
       }
     }
   </style>
@@ -1427,22 +1938,24 @@
 <body>
   <header class="site-nav" aria-label="Navigasi utama">
     <div class="shell nav-inner">
-      <a class="brand" href="#top" aria-label="SIP Warung Bakso Tulus">
+      <a class="brand" href="#top" aria-label="Sistem Informasi Penjualan">
         <span class="brand-mark"><span class="mdi mdi-noodles" aria-hidden="true"></span></span>
         <span class="brand-copy">
-          <span>SIP Bakso Tulus</span>
-          <small>Sistem penjualan dan menu digital</small>
+          <span>SIP</span>
+          <small>Sistem informasi penjualan</small>
         </span>
       </a>
       <nav class="nav-links" aria-label="Navigasi halaman">
-        <a class="nav-link" href="#data">Data</a>
-        <a class="nav-link" href="#fitur">Fitur</a>
-        <a class="nav-link" href="#alur">Alur</a>
-        <a class="nav-link" href="#akses">Akses</a>
-        <a class="nav-action" href="./pelanggan/">
-          <span class="mdi mdi-qrcode-scan" aria-hidden="true"></span>
-          <span>Akses Pelanggan</span>
-        </a>
+        <span class="nav-menu">
+          <a class="nav-link" href="#top">Beranda</a>
+          <a class="nav-link" href="#data">Data</a>
+          <a class="nav-link" href="#fitur">Fitur</a>
+          <a class="nav-link" href="#alur">Alur</a>
+          <a class="nav-link" href="#akses">Akses</a>
+        </span>
+        <button class="theme-toggle" id="themeToggle" type="button" aria-label="Ganti mode gelap atau terang" aria-pressed="false">
+          <span class="theme-icon mdi mdi-white-balance-sunny" aria-hidden="true"></span>
+        </button>
       </nav>
     </div>
   </header>
@@ -1457,8 +1970,8 @@
           </div>
           <h1>Naikkan kualitas layanan dengan <span>data penjualan yang rapi.</span></h1>
           <p class="hero-copy">
-            SIP membantu Warung Bakso Tulus menerima pesanan pelanggan, mengelola transaksi kasir,
-            memantau stok menu, dan melihat laporan omzet tanpa catatan manual yang tercecer.
+            Sistem Informasi Penjualan membantu menerima pesanan pelanggan, mengelola transaksi kasir,
+            memantau stok menu, dan membaca laporan omzet tanpa catatan manual yang tercecer.
           </p>
           <div class="hero-actions">
             <a class="btn btn-primary" href="./pelanggan/">
@@ -1494,7 +2007,7 @@
             </div>
             <div class="dashboard-body">
               <aside class="mock-sidebar" aria-hidden="true">
-                <div class="mock-logo"><span class="mdi mdi-noodles"></span>Bakso Tulus</div>
+                <div class="mock-logo"><span class="mdi mdi-noodles"></span>SIP</div>
                 <div class="side-item active"><span class="mdi mdi-view-dashboard"></span>Dashboard</div>
                 <div class="side-item"><span class="mdi mdi-clipboard-list"></span>Pesanan</div>
                 <div class="side-item"><span class="mdi mdi-cash-register"></span>Transaksi</div>
@@ -1523,7 +2036,7 @@
                   <div class="kpi-card">
                     <div class="kpi-label">Item <span class="mdi mdi-bowl-mix"></span></div>
                     <span class="kpi-value">86</span>
-                    <span class="kpi-note">Bakso Urat terlaris</span>
+                    <span class="kpi-note">Menu favorit terpantau</span>
                   </div>
                 </div>
                 <div class="mock-content-grid">
@@ -1544,11 +2057,11 @@
                     <div class="menu-mini-list">
                       <div class="menu-mini">
                         <span class="mdi mdi-noodles"></span>
-                        <div><strong>Bakso Urat</strong><span>28 porsi</span></div>
+                        <div><strong>Menu Favorit</strong><span>28 item</span></div>
                       </div>
                       <div class="menu-mini">
                         <span class="mdi mdi-food"></span>
-                        <div><strong>Mie Ayam</strong><span>19 porsi</span></div>
+                        <div><strong>Menu Tambahan</strong><span>19 item</span></div>
                       </div>
                       <div class="menu-mini">
                         <span class="mdi mdi-cup-water"></span>
@@ -1573,17 +2086,17 @@
                 <div class="phone-menu">
                   <div class="phone-menu-item">
                     <span class="dish-thumb mdi mdi-noodles"></span>
-                    <div><strong>Bakso Urat</strong><span>Rp18.000</span></div>
+                    <div><strong>Menu Utama</strong><span>Rp18.000</span></div>
                     <span class="plus">+</span>
                   </div>
                   <div class="phone-menu-item">
                     <span class="dish-thumb mdi mdi-food"></span>
-                    <div><strong>Mie Ayam</strong><span>Rp22.000</span></div>
+                    <div><strong>Paket Menu</strong><span>Rp22.000</span></div>
                     <span class="plus">+</span>
                   </div>
                   <div class="phone-menu-item">
                     <span class="dish-thumb mdi mdi-cup"></span>
-                    <div><strong>Es Jeruk</strong><span>Rp7.000</span></div>
+                    <div><strong>Minuman</strong><span>Rp7.000</span></div>
                     <span class="plus">+</span>
                   </div>
                 </div>
@@ -1597,11 +2110,11 @@
               <span>Realtime</span>
             </div>
             <div class="order-line">
-              <div><strong>PSN-000128</strong><small>Meja A3 - Bakso Urat x2</small></div>
+              <div><strong>PSN-000128</strong><small>Meja A3 - Menu Utama x2</small></div>
               <span class="status status-new">Baru</span>
             </div>
             <div class="order-line">
-              <div><strong>PSN-000127</strong><small>Meja B2 - Mie Ayam</small></div>
+              <div><strong>PSN-000127</strong><small>Meja B2 - Paket Menu</small></div>
               <span class="status status-process">Proses</span>
             </div>
           </div>
@@ -1617,7 +2130,7 @@
             <h2 class="section-title">Bukan sekadar kasir, tapi pusat keputusan harian.</h2>
           </div>
           <p class="section-copy">
-            Semua aktivitas utama warung tersimpan sebagai data: pesanan, stok, transaksi, omzet,
+            Semua aktivitas utama usaha tersimpan sebagai data: pesanan, stok, transaksi, omzet,
             modal, laba, dan menu paling laku.
           </p>
         </div>
@@ -1639,7 +2152,7 @@
                 <b>36%</b>
               </div>
               <div class="insight-row">
-                <div><span>Menu paling laris</span><strong>Bakso Urat</strong></div>
+                <div><span>Menu paling laris</span><strong>Menu Favorit</strong></div>
                 <b>128</b>
               </div>
             </div>
@@ -1673,7 +2186,7 @@
         <div class="section-head reveal">
           <div>
             <p class="section-kicker">Fitur sesuai sistem</p>
-            <h2 class="section-title">Dibuat untuk alur nyata Warung Bakso Tulus.</h2>
+            <h2 class="section-title">Dibuat untuk alur penjualan yang nyata.</h2>
           </div>
           <p class="section-copy">
             Pelanggan mendapat pengalaman pesan yang ringkas, admin mendapat kontrol penuh atas operasional.
@@ -1737,28 +2250,28 @@
         </div>
         <div class="flow-track">
           <article class="flow-card reveal">
-            <div class="flow-number">01</div>
+            <div class="flow-icon"><span class="mdi mdi-cellphone-text" aria-hidden="true"></span></div>
             <h3>Pelanggan buka menu</h3>
             <p>Pengunjung masuk ke halaman pelanggan, memilih menu, jumlah, dan catatan pesanan.</p>
-            <span class="mdi mdi-cellphone-text" aria-hidden="true"></span>
+            <span class="flow-ghost mdi mdi-cellphone-text" aria-hidden="true"></span>
           </article>
           <article class="flow-card reveal">
-            <div class="flow-number">02</div>
+            <div class="flow-icon"><span class="mdi mdi-clipboard-list" aria-hidden="true"></span></div>
             <h3>Pesanan masuk admin</h3>
             <p>Admin melihat order masuk lengkap dengan nama pelanggan, meja, item, dan total.</p>
-            <span class="mdi mdi-clipboard-list" aria-hidden="true"></span>
+            <span class="flow-ghost mdi mdi-clipboard-list" aria-hidden="true"></span>
           </article>
           <article class="flow-card reveal">
-            <div class="flow-number">03</div>
+            <div class="flow-icon"><span class="mdi mdi-timer-sand" aria-hidden="true"></span></div>
             <h3>Status diproses</h3>
             <p>Pesanan bisa ditandai diproses, selesai, atau dibatalkan sesuai kondisi dapur.</p>
-            <span class="mdi mdi-timer-sand" aria-hidden="true"></span>
+            <span class="flow-ghost mdi mdi-timer-sand" aria-hidden="true"></span>
           </article>
           <article class="flow-card reveal">
-            <div class="flow-number">04</div>
+            <div class="flow-icon"><span class="mdi mdi-file-chart" aria-hidden="true"></span></div>
             <h3>Data jadi laporan</h3>
             <p>Pesanan selesai menjadi transaksi, stok berkurang, dan laporan langsung terupdate.</p>
-            <span class="mdi mdi-file-chart" aria-hidden="true"></span>
+            <span class="flow-ghost mdi mdi-file-chart" aria-hidden="true"></span>
           </article>
         </div>
       </div>
@@ -1772,7 +2285,7 @@
             <h2 class="section-title">Pilih akses sesuai peran pengguna.</h2>
           </div>
           <p class="section-copy">
-            Landing page ini menjadi halaman awal sebelum masuk ke menu pelanggan atau panel admin.
+            Gunakan akses sesuai kebutuhan: pelanggan membuka menu digital, sementara admin mengelola operasional dari panel utama.
           </p>
         </div>
         <div class="access-grid">
@@ -1781,16 +2294,25 @@
               <div class="icon-box"><span class="mdi mdi-qrcode-scan" aria-hidden="true"></span></div>
               <h3>Akses Pelanggan</h3>
               <p>Buka menu digital, pilih makanan atau minuman, kirim pesanan, dan tracking status dengan kode pesanan.</p>
-              <div class="mini-preview" aria-hidden="true">
-                <div><span class="mdi mdi-noodles"></span><b>Bakso Urat</b><span>Rp18.000</span></div>
-                <div><span class="mdi mdi-cart-check"></span><b>Keranjang</b><span>3 item</span></div>
+              <div class="access-stats" aria-hidden="true">
+                <span>Menu</span>
+                <span>Checkout</span>
+                <span>Status</span>
               </div>
             </div>
-            <div class="access-actions">
-              <a class="btn btn-primary" href="./pelanggan/">
-                <span class="mdi mdi-arrow-right" aria-hidden="true"></span>
-                Buka Menu Pelanggan
-              </a>
+            <div class="access-flow" aria-hidden="true">
+              <div class="flow-chip">
+                <span class="mdi mdi-qrcode-scan"></span>
+                <div><b>Scan QR</b><span>Buka menu digital dari meja</span></div>
+              </div>
+              <div class="flow-chip">
+                <span class="mdi mdi-cart-check"></span>
+                <div><b>Kirim pesanan</b><span>Item, jumlah, catatan, dan meja</span></div>
+              </div>
+              <div class="flow-chip">
+                <span class="mdi mdi-progress-check"></span>
+                <div><b>Cek status</b><span>Kode pesanan bisa dipantau</span></div>
+              </div>
             </div>
           </article>
           <article class="access-card admin reveal">
@@ -1798,16 +2320,25 @@
               <div class="icon-box"><span class="mdi mdi-shield-account" aria-hidden="true"></span></div>
               <h3>Masuk Admin</h3>
               <p>Kelola dashboard, pesanan, transaksi, menu, stok, dan laporan penjualan dari satu panel.</p>
-              <div class="mini-preview" aria-hidden="true">
-                <div><span class="mdi mdi-view-dashboard-outline"></span><b>Dashboard</b><span>Live</span></div>
-                <div><span class="mdi mdi-file-chart-outline"></span><b>Laporan</b><span>Export</span></div>
+              <div class="access-stats" aria-hidden="true">
+                <span>Order</span>
+                <span>Stok</span>
+                <span>Laporan</span>
               </div>
             </div>
-            <div class="access-actions">
-              <a class="btn btn-soft" href="./admin/">
-                <span class="mdi mdi-login" aria-hidden="true"></span>
-                Masuk Panel Admin
-              </a>
+            <div class="access-flow" aria-hidden="true">
+              <div class="flow-chip">
+                <span class="mdi mdi-view-dashboard-outline"></span>
+                <div><b>Dashboard live</b><span>Omzet, pesanan, dan menu terbaca</span></div>
+              </div>
+              <div class="flow-chip">
+                <span class="mdi mdi-clipboard-check-outline"></span>
+                <div><b>Kelola pesanan</b><span>Baru, proses, selesai, batal</span></div>
+              </div>
+              <div class="flow-chip">
+                <span class="mdi mdi-file-chart-outline"></span>
+                <div><b>Laporan siap</b><span>Filter, cetak, dan evaluasi penjualan</span></div>
+              </div>
             </div>
           </article>
         </div>
@@ -1817,21 +2348,26 @@
     <section class="final-cta">
       <div class="shell">
         <div class="cta-panel reveal">
-          <div>
-            <h2>Mulai dari halaman yang terlihat profesional, lanjut ke sistem yang siap dipakai.</h2>
+          <div class="cta-copy">
+            <h2>Sistem penjualan yang membantu layanan lebih cepat dan data lebih rapi.</h2>
             <p>
-              Beri pelanggan akses menu yang mudah, dan beri admin data yang jelas untuk mengelola penjualan setiap hari.
+              Pelanggan bisa mulai dari menu digital, sementara admin langsung mengelola pesanan,
+              transaksi, stok, dan laporan penjualan dari alur yang sama.
             </p>
           </div>
-          <div class="cta-actions">
-            <a class="btn btn-primary" href="./pelanggan/">
-              <span class="mdi mdi-qrcode-scan" aria-hidden="true"></span>
-              Akses Pelanggan
-            </a>
-            <a class="btn btn-light" href="./admin/">
-              <span class="mdi mdi-view-dashboard-outline" aria-hidden="true"></span>
-              Masuk Admin
-            </a>
+          <div class="cta-summary" aria-hidden="true">
+            <div>
+              <span class="mdi mdi-qrcode-scan"></span>
+              <div><b>Akses pelanggan jelas</b><span>Menu digital dan tracking pesanan.</span></div>
+            </div>
+            <div>
+              <span class="mdi mdi-view-dashboard-outline"></span>
+              <div><b>Panel admin fokus</b><span>Pesanan, transaksi, stok, dan laporan.</span></div>
+            </div>
+            <div>
+              <span class="mdi mdi-chart-box-outline"></span>
+              <div><b>Data penjualan siap dibaca</b><span>Ringkasan omzet dan performa usaha.</span></div>
+            </div>
           </div>
         </div>
       </div>
@@ -1840,13 +2376,20 @@
 
   <footer class="site-footer">
     <div class="shell footer-inner">
-      <span>SIP Warung Bakso Tulus - Sistem Informasi Penjualan</span>
-      <div class="footer-links">
-        <a href="./pelanggan/">Pelanggan</a>
-        <a href="./admin/">Admin</a>
-      </div>
+      <a class="footer-brand" href="#top" aria-label="Kembali ke awal Sistem Informasi Penjualan">
+        <span class="footer-badge">SIP</span>
+        <span>
+          <strong>Sistem Informasi Penjualan</strong>
+          <small>Menu digital, pesanan, transaksi, stok, dan laporan.</small>
+        </span>
+      </a>
+      <span class="footer-year">&copy; 2026</span>
     </div>
   </footer>
+
+  <a class="back-top" href="#top" aria-label="Kembali ke atas">
+    <span class="mdi mdi-chevron-up" aria-hidden="true"></span>
+  </a>
 
   <script>
     const revealObserver = new IntersectionObserver((entries) => {
@@ -1856,6 +2399,84 @@
     }, { threshold: 0.12 })
 
     document.querySelectorAll('.reveal').forEach((element) => revealObserver.observe(element))
+
+    const siteNav = document.querySelector('.site-nav')
+    const navLinks = Array.from(document.querySelectorAll('.nav-link[href^="#"]'))
+    const navTargets = navLinks
+      .map((link) => document.querySelector(link.getAttribute('href')))
+      .filter(Boolean)
+    const backTop = document.querySelector('.back-top')
+
+    function getNavOffset() {
+      return (siteNav ? siteNav.offsetHeight + 18 : 0)
+    }
+
+    function setActiveNav(sectionId) {
+      navLinks.forEach((link) => {
+        link.classList.toggle('is-active', Boolean(sectionId) && link.getAttribute('href') === `#${sectionId}`)
+      })
+    }
+
+    function updateScrollState() {
+      const scrollReference = window.pageYOffset + getNavOffset() + 4
+      let activeId = ''
+
+      navTargets.forEach((section) => {
+        if (scrollReference >= section.offsetTop) activeId = section.id
+      })
+
+      setActiveNav(activeId)
+      if (backTop) backTop.classList.toggle('is-visible', window.pageYOffset > 360)
+    }
+
+    navLinks.forEach((link) => {
+      link.addEventListener('click', (event) => {
+        const target = document.querySelector(link.getAttribute('href'))
+        if (!target) return
+        event.preventDefault()
+        const top = target.offsetTop
+        setActiveNav(target.id)
+        window.scrollTo({ top, behavior: 'smooth' })
+        window.history.replaceState(null, '', link.getAttribute('href'))
+      })
+    })
+
+    window.addEventListener('scroll', updateScrollState, { passive: true })
+    window.addEventListener('resize', updateScrollState)
+    updateScrollState()
+
+    const root = document.documentElement
+    const themeToggle = document.getElementById('themeToggle')
+    const themeIcon = themeToggle ? themeToggle.querySelector('.theme-icon') : null
+
+    function applyTheme(theme) {
+      root.dataset.theme = theme
+      if (themeToggle) {
+        const isDark = theme === 'dark'
+        themeToggle.setAttribute('aria-pressed', String(isDark))
+        themeToggle.setAttribute('aria-label', isDark ? 'Ganti ke mode terang' : 'Ganti ke mode gelap')
+      }
+      if (themeIcon) {
+        themeIcon.className = theme === 'dark' ? 'theme-icon mdi mdi-weather-night' : 'theme-icon mdi mdi-white-balance-sunny'
+      }
+      try {
+        localStorage.setItem('sip_landing_theme', theme)
+      } catch (error) {}
+    }
+
+    if (themeToggle) {
+      applyTheme(root.dataset.theme || 'light')
+      themeToggle.addEventListener('click', () => {
+        const nextTheme = root.dataset.theme === 'dark' ? 'light' : 'dark'
+        if (document.startViewTransition) {
+          document.startViewTransition(() => applyTheme(nextTheme))
+        } else {
+          root.classList.add('theme-changing')
+          applyTheme(nextTheme)
+          window.setTimeout(() => root.classList.remove('theme-changing'), 360)
+        }
+      })
+    }
   </script>
 </body>
 
